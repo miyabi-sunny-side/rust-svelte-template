@@ -135,7 +135,7 @@ configuration.
 
 ```text
 .
-├── .github/workflows/  # Continuous integration and tagged image releases
+├── .github/workflows/  # Continuous integration and container release automation
 ├── client/             # Svelte 5 app, Vite config, tests, and the npm lockfile
 ├── src/                # Axum router and executable entry point
 ├── Cargo.toml          # Rust package and dependency configuration
@@ -175,16 +175,18 @@ Repository contents cannot enable GitHub's template flag. A repository administr
 **Settings → General**, enable **Template repository**, and verify that the **Use this template**
 button appears on the repository page.
 
-Continuous integration checks pushes to `main` and pull requests. A SemVer tag beginning with `v`
-triggers the release workflow, which publishes the production image to GitHub Container Registry
-(GHCR):
+Continuous integration checks pushes to `main` and pull requests. The container release workflow is
+manual by default. Create and push a SemVer milestone tag, then run **Release container** from the
+GitHub Actions page with that tag selected as the ref:
 
 ```sh
 git tag v1.2.3
 git push origin v1.2.3
 ```
 
-The resulting image is named `ghcr.io/<owner>/<repository>` and receives a version-derived tag plus
+Pushing the tag alone does not start the release workflow. To enable automatic releases for tag
+pushes, follow the comments in [`.github/workflows/release.yml`](.github/workflows/release.yml). The
+resulting image is named `ghcr.io/<owner>/<repository>` and receives a version-derived tag plus
 `latest`. Manage package visibility and consumer access in the GitHub package settings. Only tag a
 commit after its CI checks pass; use a new SemVer tag for corrections instead of moving an existing
 release tag.

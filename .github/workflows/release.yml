@@ -1,8 +1,11 @@
 name: Release container
 
 on:
-  push:
-    tags: ['v*.*.*']
+  # Manual runs must select a v-prefixed tag ref.
+  workflow_dispatch:
+  # To enable automatic releases, uncomment the next two lines.
+  # push:
+  #   tags: ['v*.*.*']
 
 permissions:
   contents: read
@@ -10,6 +13,7 @@ permissions:
 
 jobs:
   publish:
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
