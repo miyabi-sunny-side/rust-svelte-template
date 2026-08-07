@@ -328,8 +328,9 @@ on a 24×24 grid — `fill="none" stroke="currentColor" stroke-width="2"
 stroke-linecap="round" stroke-linejoin="round"` (Lucide style), default
 size `1.2em`, baseline-aligned, inheriting the text color of its context.
 
-Initial dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
-`chevron-left`.
+Current dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
+`chevron-left`, `trash`, `megaphone`, `megaphone-off`, `pencil`,
+`refresh-cw`, `check-check`, `mail`, `book`.
 
 `Icon.svelte` also exports `ICON_NAMES`, the canonical array of every
 dictionary entry. Anything that enumerates the dictionary — the
@@ -340,10 +341,14 @@ currently uses it.
 
 - **Emoji are banned as UI icons**, and so are text glyphs standing in
   for icons (▲ ▼ × ☰ ▶ …) — always an SVG entry in the dictionary.
-- **Adoption rule:** a derived project adds new icons to its own
-  `Icon.svelte`; icons that prove generally useful are adopted back into
-  this template's dictionary, so the family's icon set grows in one
-  place instead of forking per project.
+- **Adoption rule:** this template's dictionary is the family's
+  canonical copy source. A derived project adds new icons to its own
+  `Icon.svelte`; icons that prove generally useful are normalized to the
+  24×24 Lucide grammar above and adopted into this dictionary first.
+  After adoption, each project receives an explicit, separate delivery
+  that replaces its local or inline SVGs with the template's
+  name-and-geometry entry — no automatic sync, no submodule, no runtime
+  dependency; every project's DESIGN.md and build stay self-contained.
 
 ## Components
 

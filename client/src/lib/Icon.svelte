@@ -9,6 +9,14 @@
     "moon",
     "monitor",
     "chevron-left",
+    "trash",
+    "megaphone",
+    "megaphone-off",
+    "pencil",
+    "refresh-cw",
+    "check-check",
+    "mail",
+    "book",
   ] as const;
 </script>
 
@@ -54,6 +62,39 @@
     <line x1="12" y1="17" x2="12" y2="21" />
   {:else if name === "chevron-left"}
     <polyline points="15 18 9 12 15 6" />
+  {:else if name === "trash"}
+    <polyline points="3 6 5 6 21 6" />
+    <path
+      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+    />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  {:else if name === "megaphone"}
+    <path d="m3 11 18-5v12L3 14v-3z" />
+    <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+  {:else if name === "megaphone-off"}
+    <path d="M9.26 9.26 3 11v3l14 4v-2.34" />
+    <path d="M21 15V6l-6.5 1.86M11.6 16.8a3 3 0 1 1-5.8-1.6" />
+    <line x1="2" y1="2" x2="22" y2="22" />
+  {:else if name === "pencil"}
+    <path
+      d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
+    />
+    <path d="m15 5 4 4" />
+  {:else if name === "refresh-cw"}
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+    <path d="M8 16H3v5" />
+  {:else if name === "check-check"}
+    <path d="M18 6 7 17l-5-5" />
+    <path d="m22 10-7.5 7.5L13 16" />
+  {:else if name === "mail"}
+    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+  {:else if name === "book"}
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
   {/if}
 </svg>
 

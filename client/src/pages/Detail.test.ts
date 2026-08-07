@@ -41,6 +41,14 @@ describe("Detail", () => {
     "moon",
     "monitor",
     "chevron-left",
+    "trash",
+    "megaphone",
+    "megaphone-off",
+    "pencil",
+    "refresh-cw",
+    "check-check",
+    "mail",
+    "book",
   ];
 
   it("exports the published dictionary", () => {
