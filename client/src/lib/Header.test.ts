@@ -4,24 +4,59 @@ import { afterEach, describe, expect, it } from "vitest";
 import Header from "./Header.svelte";
 import { THEME_STORAGE_KEY } from "./theme";
 
-describe("Header theme flow", () => {
+describe("Header menu and theme flow", () => {
   afterEach(() => {
     cleanup();
     window.localStorage.clear();
     delete document.documentElement.dataset.theme;
   });
 
-  it("menu leads with テーマ設定 and choices apply without closing", async () => {
+  it("hamburger opens an anchored dropdown, not a dialog", async () => {
     render(Header);
+    const hamburger = screen.getByRole("button", { name: "メニュー" });
 
+    await fireEvent.click(hamburger);
+
+    expect(screen.queryByRole("dialog", { name: "メニュー" })).toBeNull();
+    expect(hamburger.getAttribute("aria-expanded")).toBe("true");
+    const menu = screen.getByRole("navigation");
+    expect(screen.getByRole("banner").contains(menu)).toBe(true);
+    const first = menu.querySelector(":scope > :first-child");
+    expect(first?.textContent?.trim()).toBe("テーマ設定");
+    expect(screen.queryByText("トップ")).toBeNull();
+  });
+
+  it("the overlay stays out of the tab order", async () => {
+    render(Header);
     await fireEvent.click(screen.getByRole("button", { name: "メニュー" }));
-    const menu = screen.getByRole("dialog", { name: "メニュー" });
-    const firstItem = menu.querySelector("nav > :first-child");
-    expect(firstItem?.textContent?.trim()).toBe("テーマ設定");
 
-    await fireEvent.click(firstItem as HTMLElement);
-    const dialog = screen.getByRole("dialog", { name: "テーマ設定" });
-    expect(dialog).toBeTruthy();
+    const overlay = screen.getByRole("button", { name: "メニューを閉じる" });
+    expect(overlay.getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("Escape and outside click close the dropdown and refocus", async () => {
+    render(Header);
+    const hamburger = screen.getByRole("button", { name: "メニュー" });
+
+    await fireEvent.click(hamburger);
+    await fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(hamburger.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(hamburger);
+
+    await fireEvent.click(hamburger);
+    await fireEvent.click(
+      screen.getByRole("button", { name: "メニューを閉じる" }),
+    );
+    expect(screen.queryByRole("navigation")).toBeNull();
+  });
+
+  it("テーマ設定 opens the modal and choices apply without closing", async () => {
+    render(Header);
+    await fireEvent.click(screen.getByRole("button", { name: "メニュー" }));
+    await fireEvent.click(screen.getByRole("button", { name: "テーマ設定" }));
+
+    expect(screen.getByRole("dialog", { name: "テーマ設定" })).toBeTruthy();
     expect(screen.getAllByRole("radio")).toHaveLength(3);
 
     await fireEvent.click(screen.getByRole("radio", { name: "ライト" }));
@@ -45,13 +80,11 @@ describe("Header theme flow", () => {
     expect(screen.getByRole("radiogroup")).toBeTruthy();
   });
 
-  it("Escape closes the modal and focus returns to the hamburger", async () => {
+  it("Escape closes the theme modal and focus returns", async () => {
     render(Header);
     const hamburger = screen.getByRole("button", { name: "メニュー" });
-
     await fireEvent.click(hamburger);
     await fireEvent.click(screen.getByRole("button", { name: "テーマ設定" }));
-    expect(screen.getByRole("radiogroup")).toBeTruthy();
 
     await fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("radiogroup")).toBeNull();

@@ -278,12 +278,14 @@ The shell stacks three rows:
 
 1. **App header — invariant on every page.** Sticky, 48px, full width,
    `--c-wash-base` background, 1px bottom hairline. Contents are exactly
-   two: the app title (label type, left) and the hamburger icon-button
-   (right). **No page-navigation links live in the header** — links live
-   inside the menu, so phone widths never crowd.
+   two: the app title as a home link (`<a href="/">`, label type,
+   on-surface ink, no underline — left) and the hamburger icon-button
+   (right). **The title is the header's only navigation link**; all
+   other navigation lives inside the menu, so phone widths never crowd.
 2. **Sub-header — detail screens only.** 40px, `--c-wash-raised`, 1px
-   bottom hairline: a back icon-button (`chevron-left`) followed by the
-   current item's title (label, single line, ellipsized).
+   bottom hairline, holding only the current item's title (label,
+   single line, ellipsized). No back button — going back is the header
+   title link or the browser itself.
 3. **Main content**, the only scrolling region.
 
 One breakpoint: **768px**. Below it, a single column with `--sp-3` side
@@ -329,6 +331,13 @@ size `1.2em`, baseline-aligned, inheriting the text color of its context.
 Initial dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
 `chevron-left`.
 
+`Icon.svelte` also exports `ICON_NAMES`, the canonical array of every
+dictionary entry. Anything that enumerates the dictionary — the
+アイコン辞書 fixture's specimen page — renders from that export, never
+from a hand-copied list. The dictionary is a vocabulary, not a usage
+report: an entry (e.g. `chevron-left`) stays even while no screen
+currently uses it.
+
 - **Emoji are banned as UI icons**, and so are text glyphs standing in
   for icons (▲ ▼ × ☰ ▶ …) — always an SVG entry in the dictionary.
 - **Adoption rule:** a derived project adds new icons to its own
@@ -338,16 +347,32 @@ Initial dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
 
 ## Components
 
-- **App header:** per Layout. The hamburger is a 36px quiet icon-button
-  with `aria-label` and `aria-expanded`.
-- **Menu (from the hamburger):** a modal-presented stack of full-width
-  default buttons. **Item 1 is always テーマ設定**; page-navigation
-  links follow. Esc, scrim click, or the × (SVG `x`) closes it.
-- **Theme settings modal:** centered modal (lg radius, 16px padding)
-  holding a `role="radiogroup"` with three radios — 自動 (`monitor`),
-  ライト (`sun`), ダーク (`moon`). Selecting applies immediately
-  (attribute + storage) and **does not close the modal** — the user
-  watches the theme change live. Close via ×, Esc, or scrim.
+- **App header:** per Layout. The title link keeps on-surface ink with
+  no underline (chrome, not content — the `link` token is for body
+  links). The hamburger is a 36px quiet icon-button with `aria-label`
+  and `aria-expanded`.
+- **Menu (from the hamburger):** a dropdown panel spatially anchored to
+  the hamburger, not a modal — absolutely positioned at `top: 100%` /
+  `right: 0` within the header's positioned right slot, `min-width`
+  180px, surface-raised background, 1px hairline border, lg radius with
+  `overflow: hidden`, and the single floating shadow. There is **no
+  scrim**; a transparent `position: fixed` full-viewport close button
+  sits behind the panel so any outside click closes it. Esc also
+  closes; closing always returns focus to the hamburger, and
+  `aria-expanded` mirrors the open state. Items are full-width
+  borderless rows — label type, `--sp-2`/`--sp-3` padding, left
+  aligned, transparent background, hover `--c-hover-1`, square corners
+  clipped by the panel's lg radius. **Item 1 is always テーマ設定**,
+  which opens the centered theme settings modal; page-navigation links
+  of derived projects follow it. There is no トップ/home item — the
+  header title already is the home link.
+- **Theme settings modal:** opened from the menu's テーマ設定 item; the
+  centered modal (lg radius, 16px padding, scrim + shadow) holding a
+  `role="radiogroup"` with three radios — 自動 (`monitor`), ライト
+  (`sun`), ダーク (`moon`). Selecting applies immediately (attribute +
+  storage) and **does not close the modal** — the user watches the
+  theme change live. Close via ×, Esc, or scrim; focus returns to the
+  hamburger.
 - **Top page — card list:** cards per the family recipe
   (surface-raised, 1px hairline, 8px radius, 10px padding) in a single
   column with 8px gaps; each card links to its detail page and shows the
@@ -358,10 +383,19 @@ Initial dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
   - _empty:_ centered muted body-sm message;
   - _error:_ danger-colored body-sm message plus a default retry button;
   - _success:_ the cards.
-- **Detail page — generic fixture:** sub-header (back + name) over a
+- **Detail page — generic fixture:** sub-header (title only) over a
   content column showing summary (body), status (an outline badge —
   caption type, 1px border, muted text; neutral chrome, not a data
   color), updated-at (caption muted), and body text (body, 1.6).
+- **Icon dictionary fixture (`id: icons`):** this fixture's detail page
+  appends a live specimen of the whole dictionary below the standard
+  fields: a non-interactive list (`ul`/`li` — no `button`, no `a`,
+  nothing focusable) with one tile per entry of `ICON_NAMES`. Each tile
+  is the icon centered in a 36px square styled by the icon-button
+  recipe (surface-raised, 1px hairline, sm radius) with the entry name
+  beneath as muted caption, tiles flowing in a responsive grid with
+  `--sp-2` gaps. Specimens look like the control they document but are
+  not pressable — a button that does nothing is worse than a picture.
 - **Buttons:** default = surface-raised bg, 1px hairline, label type,
   sm radius, 8×14px padding, hover fills `--c-hover-1`. Primary =
   accent bg, `surface-raised`-token text — at most one per screen.
@@ -406,9 +440,10 @@ Initial dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
   2. Choosing ライト in the theme modal sets `data-theme="light"`,
      turns the body `rgb(250, 246, 239)`, writes the storage key, and
      leaves the modal open.
-  3. At 375px the header contains exactly the title and the hamburger,
-     and `document.documentElement.scrollWidth` never exceeds the
-     viewport.
+  3. At 375px the header contains exactly two interactive elements —
+     the title `<a href="/">` and the hamburger `<button>` — and
+     `document.documentElement.scrollWidth` never exceeds the
+     viewport, with the menu closed or open.
   4. Cards compute to 1px border / 8px radius / 10px padding / 8px gap;
      the list's `data-state` reflects loading, empty, error, success.
   5. Chrome icons are all inline SVG on the 24×24 viewBox grid, stroked
@@ -416,6 +451,19 @@ Initial dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
      anywhere.
   6. `:focus-visible` on any control shows the 2px accent outline with
      2px offset.
+  7. Clicking the hamburger opens the dropdown: the panel's top edge
+     meets the header's bottom edge and its right edge aligns with the
+     hamburger's right edge (±1px); computed `min-width` 180px, 12px
+     radius, 1px border, the single floating shadow; no scrim element
+     exists and `aria-expanded` is `true`. Esc closes it and focus
+     returns to the hamburger; a click outside the panel also closes
+     it. Item 1 reads テーマ設定 and opens the centered theme modal.
+  8. A detail page's sub-header contains the item title and zero
+     buttons or links.
+  9. The アイコン辞書 detail page renders exactly `ICON_NAMES.length`
+     specimen tiles, none focusable; each icon box computes to
+     36×36px / 1px border / 6px radius with the entry name as a muted
+     caption.
 
 ## Do's and Don'ts
 
@@ -424,6 +472,8 @@ Initial dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
 - Do consume `--c-wash-*` / `--c-hover-*` for bands and hovers; don't
   reach for `accent-subtle` directly in those jobs.
 - Do keep exactly one accent-filled primary action per screen.
+- Do present the menu as a hamburger-anchored dropdown; centered
+  modals are for dialogs (theme settings), never for navigation.
 - Don't use emoji or text glyphs as icons; every icon is an
   `Icon.svelte` dictionary entry.
 - Don't introduce font sizes, radii, spacing values, or shadows outside

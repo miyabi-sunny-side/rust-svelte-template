@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Icon from "../lib/Icon.svelte";
+  import IconCatalog from "../lib/IconCatalog.svelte";
   import { fetchItem, type Item } from "../lib/api";
 
   let { id }: { id: string } = $props();
@@ -30,14 +30,6 @@
 </script>
 
 <div class="sub-header">
-  <button
-    class="icon-btn"
-    type="button"
-    aria-label="戻る"
-    onclick={() => window.history.back()}
-  >
-    <Icon name="chevron-left" />
-  </button>
   <h1 class="sub-title">{item ? item.name : "詳細"}</h1>
 </div>
 
@@ -55,6 +47,9 @@
       <span class="updated">{item.updated_at}</span>
     </p>
     <p class="body-text">{item.body}</p>
+    {#if item.id === "icons"}
+      <IconCatalog />
+    {/if}
   {/if}
 </div>
 

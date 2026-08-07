@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/svelte";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App.svelte";
@@ -34,12 +40,18 @@ describe("App", () => {
     render(App);
 
     const header = screen.getByRole("banner");
-    expect(header.textContent).toContain("rust-svelte-template");
+    const title = header.querySelector('a[href="/"]');
+    expect(title?.textContent).toContain("rust-svelte-template");
     expect(screen.getByRole("button", { name: "メニュー" })).toBeTruthy();
-    expect(header.querySelector("a")).toBeNull();
+    expect(header.querySelectorAll("a, button")).toHaveLength(2);
 
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: ITEM.name })).toBeTruthy(),
     );
+    const subHeader = document.querySelector(".sub-header");
+    expect(subHeader?.querySelectorAll("a, button")).toHaveLength(0);
+
+    await fireEvent.click(title as HTMLElement);
+    expect(window.location.pathname).toBe("/");
   });
 });

@@ -1,3 +1,17 @@
+<script module lang="ts">
+  // Canonical list of every dictionary entry. Enumerators (the icon
+  // dictionary specimen page) render from this export, never from a
+  // hand-copied list. Keep it in sync with the {#if} chain below.
+  export const ICON_NAMES = [
+    "menu",
+    "x",
+    "sun",
+    "moon",
+    "monitor",
+    "chevron-left",
+  ] as const;
+</script>
+
 <script lang="ts">
   // The single icon dictionary (DESIGN.md, Iconography). Derived projects
   // extend this file; generally useful icons are adopted back into the
