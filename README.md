@@ -5,8 +5,10 @@ An always-green starting point for a small web service. It combines an
 authentication, persistence, and deployment-provider policy out of the template.
 
 In a production build, one Rust process serves both the JSON API and the compiled frontend. The
-starter UI calls the API and makes that connection visible, giving a newly created repository a
-small end-to-end baseline to change with confidence.
+starter UI is the Sumi-family app shell — an API-backed card list, a detail page behind a small
+client-side router, and a light/dark theme system — giving a newly created repository a small
+end-to-end baseline to change with confidence. [`DESIGN.md`](DESIGN.md) is the self-contained
+design contract behind that shell.
 
 ## Prerequisites
 
@@ -35,6 +37,7 @@ Open <http://127.0.0.1:3000>. The Rust server also exposes:
 
 - `GET /healthz` — plain-text liveness response: `ok`
 - `GET /api/health` — JSON service response: `{"status":"ok"}`
+- `GET /api/items` — demo fixtures backing the starter card list
 
 Stop the service with <kbd>Ctrl</kbd>+<kbd>C</kbd>.
 
@@ -156,15 +159,16 @@ references in Rust source and log targets use underscores.
    configuration.
 2. Replace `rust_svelte_template` in Rust source, commands, and logging examples.
 3. Replace `rust-svelte-template-client` in `client/package.json` and `client/package-lock.json`.
-4. Replace the starter title, description, and field-kit identity in `README.md`, `DESIGN.md`,
-   `client/index.html`, and `client/src/`.
+4. Replace the starter title, description, accent color, and theme storage key
+   (`rust-svelte-template:theme`) in `README.md`, `DESIGN.md`, `client/index.html`, and
+   `client/src/`.
 5. Review image names, badges, repository links, and package references for the new GitHub owner and
    repository.
 6. Confirm that no old identifiers remain, then run the full verification set:
 
 ```sh
 rg -n --hidden --glob '!.git/**' \
-  'rust-svelte-template|rust_svelte_template|Rust \+ Svelte|Field Kit'
+  'rust-svelte-template|rust_svelte_template|Rust \+ Svelte'
 ```
 
 After renaming the Rust package, refresh `Cargo.lock` with `cargo check` before committing it.

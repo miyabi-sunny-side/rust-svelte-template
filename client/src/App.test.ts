@@ -1,38 +1,45 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { cleanup, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App.svelte";
 
+const ITEM = {
+  id: "sumi",
+  name: "Sumi ダークテーマ",
+  summary: "概要テキスト",
+  status: "stable",
+  updated_at: "2026-08-01",
+  body: "本文テキスト",
+};
+
 describe("App", () => {
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
+    window.history.replaceState(null, "", "/");
   });
 
-  it("shows a connected service and can retry after a failure", async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ status: "ok" }), { status: 200 }),
-      )
-      .mockRejectedValueOnce(new Error("offline"))
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ status: "ok" }), { status: 200 }),
-      );
-    vi.stubGlobal("fetch", fetchMock);
+  it("keeps the invariant header and restores a deep detail URL", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>().mockImplementation((input) => {
+        const payload = String(input) === "/api/items" ? [ITEM] : ITEM;
+        return Promise.resolve(
+          new Response(JSON.stringify(payload), { status: 200 }),
+        );
+      }),
+    );
+    window.history.replaceState(null, "", "/items/sumi");
 
-    const view = render(App);
-
-    await waitFor(() => expect(screen.getByText("connected")).toBeTruthy());
-    expect(
-      screen.getByText("Rust and Svelte are speaking the same language."),
-    ).toBeTruthy();
-
-    view.unmount();
     render(App);
-    await waitFor(() => expect(screen.getByText("unavailable")).toBeTruthy());
 
-    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(screen.getByText("connected")).toBeTruthy());
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const header = screen.getByRole("banner");
+    expect(header.textContent).toContain("rust-svelte-template");
+    expect(screen.getByRole("button", { name: "メニュー" })).toBeTruthy();
+    expect(header.querySelector("a")).toBeNull();
+
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: ITEM.name })).toBeTruthy(),
+    );
   });
 });
