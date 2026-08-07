@@ -49,6 +49,9 @@ describe("Detail", () => {
     "check-check",
     "mail",
     "book",
+    "search",
+    "star",
+    "star-filled",
   ];
 
   it("exports the published dictionary", () => {

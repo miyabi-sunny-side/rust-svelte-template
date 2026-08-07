@@ -8,6 +8,9 @@ interface Shape {
   attrs: Record<string, string>;
 }
 
+const STAR_POINTS =
+  "12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2";
+
 // Fixed expectations for the entries adopted from the family projects.
 // Written out by hand (not derived from the component) so a silent shape
 // change cannot re-green this file. `mail` is the canonical Lucide
@@ -76,6 +79,24 @@ const ADOPTED_SHAPES: Record<string, Shape[]> = {
       attrs: {
         d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",
       },
+    },
+  ],
+  search: [
+    { tag: "circle", attrs: { cx: "11", cy: "11", r: "8" } },
+    { tag: "line", attrs: { x1: "21", y1: "21", x2: "16.65", y2: "16.65" } },
+  ],
+  // star and star-filled share one geometry; only the primitive fill
+  // differs. The root svg stays fill="none" for every entry.
+  star: [
+    {
+      tag: "polygon",
+      attrs: { points: STAR_POINTS, fill: "none" },
+    },
+  ],
+  "star-filled": [
+    {
+      tag: "polygon",
+      attrs: { points: STAR_POINTS, fill: "currentColor" },
     },
   ],
 };

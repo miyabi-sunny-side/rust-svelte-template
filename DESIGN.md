@@ -330,7 +330,14 @@ size `1.2em`, baseline-aligned, inheriting the text color of its context.
 
 Current dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
 `chevron-left`, `trash`, `megaphone`, `megaphone-off`, `pencil`,
-`refresh-cw`, `check-check`, `mail`, `book`.
+`refresh-cw`, `check-check`, `mail`, `book`, `search`, `star`,
+`star-filled`.
+
+Outline is the unnamed default: a `-filled` variant shares its outline
+sibling's geometry and overrides `fill` to `currentColor` on the shape
+itself — the root svg stays `fill="none"` for every entry. A filled
+variant is a visual state only; the control using it must still carry
+that state accessibly (e.g. `aria-pressed`), never through color alone.
 
 `Icon.svelte` also exports `ICON_NAMES`, the canonical array of every
 dictionary entry. Anything that enumerates the dictionary — the
