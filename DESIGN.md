@@ -229,7 +229,7 @@ semantic hooks decouple "where warmth appears" from component code:
 | Hook              | Job                                      | Sumi resolves to        | Kinari resolves to     |
 | ----------------- | ---------------------------------------- | ----------------------- | ---------------------- |
 | `--c-wash-base`   | app-header band background               | `#232323` (raised)      | `#f6efe0` (amber wash) |
-| `--c-wash-raised` | sub-header / sticky band background      | `#232323` (raised)      | `#faf4ea` (faint wash) |
+| `--c-wash-raised` | sub-header / sticky band background      | `#191919` (page surface — the band sits flush with the page, separated by its hairline alone) | `#faf4ea` (faint wash) |
 | `--c-hover-1`     | hover fill (buttons, rows, menu items)   | `#333333` (border gray) | `rgba(154,106,0,.10)`  |
 | `--c-hover-2`     | pressed / active-row fill                | `#3d3d3d`               | `rgba(154,106,0,.16)`  |
 
