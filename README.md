@@ -179,9 +179,13 @@ Repository contents cannot enable GitHub's template flag. A repository administr
 **Settings → General**, enable **Template repository**, and verify that the **Use this template**
 button appears on the repository page.
 
-Continuous integration checks pushes to `main` and pull requests. The container release workflow is
-manual by default. Create and push a SemVer milestone tag, then run **Release container** from the
-GitHub Actions page with that tag selected as the ref:
+Continuous integration checks pushes to `main` and pull requests. Every push to `main` also builds
+and publishes the container image to `ghcr.io/<owner>/<repository>`, tagged `sha-<short-sha>` and
+`edge`. Pull request runs build the same image but never push it, since forked PRs do not carry
+`packages: write`.
+
+The container release workflow is manual by default. Create and push a SemVer milestone tag, then
+run **Release container** from the GitHub Actions page with that tag selected as the ref:
 
 ```sh
 git tag v1.2.3
@@ -189,9 +193,13 @@ git push origin v1.2.3
 ```
 
 Pushing the tag alone does not start the release workflow. To enable automatic releases for tag
-pushes, follow the comments in [`.github/workflows/release.yml`](.github/workflows/release.yml). The
-resulting image is named `ghcr.io/<owner>/<repository>` and receives a version-derived tag plus
-`latest`. Manage package visibility and consumer access in the GitHub package settings. Only tag a
+pushes, follow the comments in [`.github/workflows/release.yml`](.github/workflows/release.yml).
+
+Release does not rebuild the image. It looks for the `sha-<short-sha>` image that CI already pushed
+for the tagged commit and, when found, retags it as `<version>` and `latest` with `docker buildx
+imagetools create` — no compilation happens. If that image is missing (CI on `main` never ran for
+that commit, failed, or its cache expired), the workflow falls back to building and pushing the image
+itself. Manage package visibility and consumer access in the GitHub package settings. Only tag a
 commit after its CI checks pass; use a new SemVer tag for corrections instead of moving an existing
 release tag.
 
