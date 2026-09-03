@@ -195,13 +195,17 @@ git push origin v1.2.3
 Pushing the tag alone does not start the release workflow. To enable automatic releases for tag
 pushes, follow the comments in [`.github/workflows/release.yml`](.github/workflows/release.yml).
 
-Release does not rebuild the image. It looks for the `sha-<short-sha>` image that CI already pushed
-for the tagged commit and, when found, retags it as `<version>` and `latest` with `docker buildx
-imagetools create` — no compilation happens. If that image is missing (CI on `main` never ran for
-that commit, failed, or its cache expired), the workflow falls back to building and pushing the image
-itself. Manage package visibility and consumer access in the GitHub package settings. Only tag a
-commit after its CI checks pass; use a new SemVer tag for corrections instead of moving an existing
-release tag.
+A release is three steps in one run: **tag → image retag → GitHub Release**. Release does not
+rebuild the image. It looks for the `sha-<short-sha>` image that CI already pushed for the tagged
+commit and, when found, retags it as `<version>` and `latest` with `docker buildx imagetools create`
+— no compilation happens. If that image is missing (CI on `main` never ran for that commit, failed,
+or its cache expired), the workflow falls back to building and pushing the image itself. The same run
+then creates the GitHub Release for the tag with generated notes and one line naming the image it
+published (`ghcr.io/<owner>/<repository>:vX.Y.Z@sha256:…`), so a person reading the Release knows
+what to deploy and a listener on release notifications can act on it. Re-running the workflow for a
+tag that already has a Release leaves that Release as it is. Manage package visibility and consumer
+access in the GitHub package settings. Only tag a commit after its CI checks pass; use a new SemVer
+tag for corrections instead of moving an existing release tag.
 
 ## License
 
