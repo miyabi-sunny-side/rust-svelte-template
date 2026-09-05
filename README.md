@@ -179,33 +179,49 @@ Repository contents cannot enable GitHub's template flag. A repository administr
 **Settings → General**, enable **Template repository**, and verify that the **Use this template**
 button appears on the repository page.
 
-Continuous integration checks pushes to `main` and pull requests. Every push to `main` also builds
-and publishes the container image to `ghcr.io/<owner>/<repository>`, tagged `sha-<short-sha>` and
-`edge`. Pull request runs build the same image but never push it, since forked PRs do not carry
-`packages: write`.
+Continuous integration checks pushes to `main` and pull requests, including a debug server smoke
+test with the built frontend. Pull requests also build the production container without publishing
+it. Pushes to `main` do not build the release binary or container, or publish images.
 
-The container release workflow is manual by default. Create and push a SemVer milestone tag, then
-run **Release container** from the GitHub Actions page with that tag selected as the ref:
+This repository is a template, not a released product. Its container release workflow is manual by
+default, and pushing a tag alone does not publish anything. The following release setup is for a
+**derived product repository**.
+
+For automatic product releases, uncomment the `push` / `tags` trigger in
+[`.github/workflows/release.yml`](.github/workflows/release.yml). Leave `workflow_dispatch` in place
+to allow manual runs with a `v`-prefixed tag selected as the ref. In the derived repository, update
+`package.version` in `Cargo.toml`, run `cargo check` to refresh `Cargo.lock`, and commit both files.
+After that commit's CI checks pass, create and push its matching SemVer tag (for example, package
+version `1.2.3`):
 
 ```sh
 git tag v1.2.3
 git push origin v1.2.3
 ```
 
-Pushing the tag alone does not start the release workflow. To enable automatic releases for tag
-pushes, follow the comments in [`.github/workflows/release.yml`](.github/workflows/release.yml).
+If you keep the manual default, select that tag when running **Release container** from the GitHub
+Actions page. Use a new SemVer tag for corrections instead of moving an existing release tag.
 
-A release is three steps in one run: **tag → image retag → GitHub Release**. Release does not
-rebuild the image. It looks for the `sha-<short-sha>` image that CI already pushed for the tagged
-commit and, when found, retags it as `<version>` and `latest` with `docker buildx imagetools create`
-— no compilation happens. If that image is missing (CI on `main` never ran for that commit, failed,
-or its cache expired), the workflow falls back to building and pushing the image itself. The same run
-then creates the GitHub Release for the tag with generated notes and one line naming the image it
-published (`ghcr.io/<owner>/<repository>:vX.Y.Z@sha256:…`), so a person reading the Release knows
-what to deploy and a listener on release notifications can act on it. Re-running the workflow for a
-tag that already has a Release leaves that Release as it is. Manage package visibility and consumer
-access in the GitHub package settings. Only tag a commit after its CI checks pass; use a new SemVer
-tag for corrections instead of moving an existing release tag.
+Each release first verifies that the tag matches `Cargo.toml`'s package version, then builds the
+tagged source using its actual `Cargo.toml` and `Cargo.lock`, pushes
+`ghcr.io/<owner>/<repository>:<version>` and `latest`, and creates a GitHub Release with generated
+notes and the published image reference (`ghcr.io/<owner>/<repository>:X.Y.Z@sha256:…`). It does
+not depend on a previously published CI image. Re-running the workflow for a tag that already has a
+GitHub Release leaves that Release as it is.
+
+The release workflow imports and exports BuildKit's registry cache at
+`ghcr.io/<owner>/<repository>:build-cache` with `mode=max`, retaining the existing Dockerfile's
+cargo-chef dependency layers and frontend build layers between releases. No cache is required for
+the first release; a missing cache causes a normal build. The workflow uses `GITHUB_TOKEN` with
+`packages: write` for the image and cache, and `contents: write` for the GitHub Release. In a derived
+repository, enable GitHub Actions and ensure its token can write to the GHCR package; if reusing an
+existing package, grant that repository access in the package settings. Manage package visibility
+and consumer access there too. If you change the image path, update both registry cache references
+alongside the metadata image name in the release workflow.
+
+The release profile uses `opt-level = 3`, `lto = false`, `codegen-units = 16`, and `strip = true` to
+reduce build wait time while retaining optimized, stripped binaries. Derived products can measure
+their own runtime requirements before choosing a different tradeoff.
 
 ## License
 
