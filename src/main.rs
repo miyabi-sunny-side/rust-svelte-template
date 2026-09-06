@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let listener = TcpListener::bind(bind_addr).await?;
     info!(%bind_addr, "server listening");
 
-    axum::serve(listener, rust_svelte_template::app("client/dist"))
+    axum::serve(listener, rust_svelte_template::app())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 

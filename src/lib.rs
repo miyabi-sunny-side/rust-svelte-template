@@ -1,14 +1,15 @@
-use std::path::Path;
-
 use axum::{
-    Json, Router, extract::Path as UrlPath, http::StatusCode, response::IntoResponse,
-    response::Response, routing::get,
+    Json, Router,
+    extract::Path as UrlPath,
+    http::{StatusCode, Uri, header},
+    response::IntoResponse,
+    response::Response,
+    routing::get,
 };
 use serde::Serialize;
-use tower_http::{
-    services::{ServeDir, ServeFile},
-    trace::TraceLayer,
-};
+use tower_http::trace::TraceLayer;
+
+static UI: include_dir::Dir<'_> = include_dir::include_dir!("$CARGO_MANIFEST_DIR/client/dist");
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -68,8 +69,7 @@ const ITEMS: &[Item] = &[
     },
 ];
 
-pub fn app(static_dir: impl AsRef<Path>) -> Router {
-    let static_dir = static_dir.as_ref().to_path_buf();
+pub fn app() -> Router {
     let api = Router::new()
         .route("/health", get(api_health))
         .route("/items", get(api_items))
@@ -78,11 +78,26 @@ pub fn app(static_dir: impl AsRef<Path>) -> Router {
 
     Router::new()
         .route("/healthz", get(healthz))
+        .route("/api", axum::routing::any(api_not_found))
+        .route("/api/", axum::routing::any(api_not_found))
         .nest("/api", api)
-        .fallback_service(
-            ServeDir::new(&static_dir).fallback(ServeFile::new(static_dir.join("index.html"))),
-        )
+        .fallback_service(get(ui))
         .layer(TraceLayer::new_for_http())
+}
+
+async fn ui(uri: Uri) -> Response {
+    let file = UI
+        .get_file(uri.path().trim_start_matches('/'))
+        .unwrap_or_else(|| {
+            UI.get_file("index.html")
+                .expect("build requires index.html")
+        });
+    let content_type = mime_guess::from_path(file.path()).first_or_octet_stream();
+    (
+        [(header::CONTENT_TYPE, content_type.as_ref())],
+        file.contents(),
+    )
+        .into_response()
 }
 
 async fn healthz() -> &'static str {
@@ -119,8 +134,84 @@ mod tests {
     use super::app;
 
     #[tokio::test]
+    async fn ui_is_available_without_a_static_directory() {
+        let response = app()
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        assert!(body.starts_with(b"<!doctype html>"));
+        assert!(std::str::from_utf8(&body).unwrap().contains("/assets/"));
+    }
+
+    #[tokio::test]
+    async fn compiled_assets_are_served_with_their_content_types() {
+        let response = app()
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let html = std::str::from_utf8(&body).unwrap();
+        for (attribute, extension, content_type) in [
+            ("src=\"", ".js", "text/javascript"),
+            ("href=\"", ".css", "text/css"),
+        ] {
+            let asset = html
+                .split(attribute)
+                .skip(1)
+                .filter_map(|part| part.split('"').next())
+                .find(|path| path.ends_with(extension))
+                .expect("compiled HTML references its asset");
+            let response = app()
+                .oneshot(Request::builder().uri(asset).body(Body::empty()).unwrap())
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            assert_eq!(response.headers()["content-type"], content_type);
+            let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+            assert!(!body.is_empty());
+            assert!(!body.starts_with(b"<!doctype html>"));
+
+            let response = app()
+                .oneshot(
+                    Request::builder()
+                        .method("HEAD")
+                        .uri(asset)
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            assert_eq!(response.headers()["content-type"], content_type);
+            assert!(
+                to_bytes(response.into_body(), usize::MAX)
+                    .await
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn ui_rejects_mutating_requests() {
+        let response = app()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/projects/example")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::METHOD_NOT_ALLOWED);
+    }
+
+    #[tokio::test]
     async fn liveness_is_lightweight_plain_text() {
-        let response = app("client/dist")
+        let response = app()
             .oneshot(
                 Request::builder()
                     .uri("/healthz")
@@ -139,7 +230,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_health_returns_stable_json() {
-        let response = app("client/dist")
+        let response = app()
             .oneshot(
                 Request::builder()
                     .uri("/api/health")
@@ -158,7 +249,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_items_lists_the_demo_fixtures() {
-        let response = app("client/dist")
+        let response = app()
             .oneshot(
                 Request::builder()
                     .uri("/api/items")
@@ -179,7 +270,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_item_detail_returns_the_matching_item() {
-        let response = app("client/dist")
+        let response = app()
             .oneshot(
                 Request::builder()
                     .uri("/api/items/theme")
@@ -198,7 +289,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_item_detail_rejects_unknown_ids() {
-        let response = app("client/dist")
+        let response = app()
             .oneshot(
                 Request::builder()
                     .uri("/api/items/missing")
@@ -213,22 +304,19 @@ mod tests {
 
     #[tokio::test]
     async fn unknown_api_routes_do_not_fall_back_to_the_spa() {
-        let response = app("client/dist")
-            .oneshot(
-                Request::builder()
-                    .uri("/api/missing")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        for uri in ["/api", "/api/", "/api/missing"] {
+            let response = app()
+                .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+                .await
+                .unwrap();
 
-        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+            assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        }
     }
 
     #[tokio::test]
     async fn unknown_client_routes_return_the_spa_with_success() {
-        let response = app("client")
+        let response = app()
             .oneshot(
                 Request::builder()
                     .uri("/projects/example")

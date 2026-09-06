@@ -4,7 +4,7 @@ An always-green starting point for a small web service. It combines an
 [Axum](https://github.com/tokio-rs/axum) backend with a Svelte 5 and Vite frontend, while keeping
 authentication, persistence, and deployment-provider policy out of the template.
 
-In a production build, one Rust process serves both the JSON API and the compiled frontend. The
+In a production build, one Rust binary embeds and serves both the JSON API and the compiled frontend. The
 starter UI is the Sumi-family app shell — an API-backed card list, a detail page behind a small
 client-side router, and a light/dark theme system — giving a newly created repository a small
 end-to-end baseline to change with confidence. [`DESIGN.md`](DESIGN.md) is the self-contained
@@ -45,9 +45,14 @@ Stop the service with <kbd>Ctrl</kbd>+<kbd>C</kbd>.
 
 Use two terminals so Vite can provide hot module replacement while Rust handles the API.
 
+Build the frontend once before compiling Rust (the quick start already does this). Vite then
+serves frontend edits immediately; rebuild the frontend and Rust to update the embedded UI.
+
 Terminal 1, from the repository root:
 
 ```sh
+npm --prefix client ci
+npm --prefix client run build
 cargo run
 ```
 
@@ -85,8 +90,9 @@ sync when changing the starter interface's visual system or interaction states.
 
 ## Production build and smoke test
 
-Build the frontend before the Rust binary because the server reads static assets from
-`client/dist` at runtime:
+Build the frontend before the Rust binary. Compilation embeds `client/dist` and fails with a
+build instruction if `client/dist/index.html` is missing. Frontend rebuilds are tracked by Cargo;
+recompile Rust after rebuilding the UI:
 
 ```sh
 cd client
@@ -94,8 +100,14 @@ npm ci
 npm run build
 cd ..
 cargo build --locked --release
-./target/release/rust-svelte-template
+binary_dir=$(mktemp -d)
+cp target/release/rust-svelte-template "$binary_dir/"
+cd "$binary_dir"
+./rust-svelte-template
 ```
+
+The executable runs from this isolated directory without any UI files. Only the binary needs to
+be deployed; there is no runtime static-directory setting.
 
 In another terminal:
 
@@ -118,6 +130,9 @@ Build and run the same frontend-plus-backend service in a non-root container:
 docker build -t rust-svelte-template .
 docker run --rm -p 3000:3000 rust-svelte-template
 ```
+
+The build embeds the frontend after caching Rust dependencies. The runtime image contains only the
+application binary on its base image; no separate UI directory is copied.
 
 Then use the smoke-test requests above against <http://127.0.0.1:3000>. The image sets the bind
 address for container networking and exposes port 3000; the application still defaults to loopback
@@ -148,7 +163,7 @@ configuration.
 ```
 
 The backend reserves `/api/*` for API routes. Unknown API paths return 404 instead of the frontend.
-Other unknown paths fall back to `client/dist/index.html`, allowing client-side routing.
+Other unknown paths fall back to the embedded `index.html`, allowing client-side routing.
 
 ## Rename the template
 
@@ -180,7 +195,7 @@ Repository contents cannot enable GitHub's template flag. A repository administr
 button appears on the repository page.
 
 Continuous integration checks pushes to `main` and pull requests, including a debug server smoke
-test with the built frontend. Pull requests also build the production container without publishing
+test from an isolated directory using the embedded frontend. Pull requests also build the production container without publishing
 it. Pushes to `main` do not build the release binary or container, or publish images.
 
 This repository is a template, not a released product. Its container release workflow is manual by

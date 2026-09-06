@@ -60,13 +60,16 @@ jobs:
       - name: Build smoke-test binary
         run: cargo build --locked
 
-      - name: Smoke-test server with built frontend
+      - name: Smoke-test embedded UI from an isolated directory
         shell: bash
         run: |
           set -euo pipefail
-          target/debug/rust-svelte-template &
+          binary_dir=$(mktemp -d)
+          cp target/debug/rust-svelte-template "$binary_dir/"
+          cd "$binary_dir"
+          ./rust-svelte-template &
           server_pid=$!
-          trap 'kill -TERM "$server_pid" 2>/dev/null || true' EXIT
+          trap 'kill -TERM "$server_pid" 2>/dev/null || true; rm -rf "$binary_dir"' EXIT
 
           for attempt in {1..20}; do
             if curl --fail --silent --show-error http://127.0.0.1:3000/healthz >/dev/null; then
@@ -80,12 +83,18 @@ jobs:
 
           test "$(curl --fail --silent http://127.0.0.1:3000/healthz)" = "ok"
           test "$(curl --fail --silent http://127.0.0.1:3000/api/health)" = '{"status":"ok"}'
-          curl --fail --silent http://127.0.0.1:3000/ | grep --ignore-case '<!doctype html'
+          curl --fail --silent http://127.0.0.1:3000/ > index.html
+          grep --ignore-case '<!doctype html' index.html
+          asset=$(sed -n 's/.*src="\([^" ]*\.js\)".*/\1/p' index.html)
+          test -n "$asset"
+          curl --fail --silent "http://127.0.0.1:3000$asset" > app.js
+          test -s app.js
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3000/api/missing)" = "404"
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3000/projects/example)" = "200"
 
           kill -TERM "$server_pid"
           wait "$server_pid"
+          rm -rf "$binary_dir"
           trap - EXIT
 
   container:
