@@ -143,7 +143,10 @@ when run directly on the host.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `APP_BIND_ADDR` | `127.0.0.1:3000` | Socket address used by the Rust HTTP listener. Use `0.0.0.0:3000` when the process must accept connections outside its own network namespace. |
-| `RUST_LOG` | `info` | Logging filter consumed by `tracing-subscriber`, for example `rust_svelte_template=debug,tower_http=debug`. |
+| `LOG_LEVEL` | `info` | Accepts exactly `off`, `error`, `warn`, `info`, `debug`, or `trace`. Unset or invalid values use `info`. |
+
+`LOG_LEVEL` is the shared logging contract for household services, independent of their
+implementation language. Each service owns its internal mapping to its logging library.
 
 No application secrets, database, authentication provider, or deployment-provider settings are
 required. Add those explicitly when the project needs them rather than carrying unused template

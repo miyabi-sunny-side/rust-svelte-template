@@ -1,18 +1,15 @@
+mod logging;
+
 use std::{env, error::Error, net::SocketAddr};
 
 use tokio::net::TcpListener;
 use tracing::info;
-use tracing_subscriber::EnvFilter;
 
 const DEFAULT_BIND_ADDR: &str = "127.0.0.1:3000";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .init();
+    logging::init();
 
     let bind_addr = bind_addr_from_env()?;
     let listener = TcpListener::bind(bind_addr).await?;
