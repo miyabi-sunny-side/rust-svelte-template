@@ -28,7 +28,7 @@ RUN cargo build --locked --release
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 COPY --from=backend /app/target/release/rust-svelte-template /usr/local/bin/rust-svelte-template
-ENV APP_BIND_ADDR=0.0.0.0:3000
+ENV PORT=3000
 EXPOSE 3000
 USER 10001:10001
 ENTRYPOINT ["rust-svelte-template"]

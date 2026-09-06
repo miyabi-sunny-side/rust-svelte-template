@@ -128,22 +128,27 @@ Build and run the same frontend-plus-backend service in a non-root container:
 
 ```sh
 docker build -t rust-svelte-template .
-docker run --rm -p 3000:3000 rust-svelte-template
+docker run --rm -p 127.0.0.1:3000:3000 rust-svelte-template
 ```
 
 The build embeds the frontend after caching Rust dependencies. The runtime image contains only the
 application binary on its base image; no separate UI directory is copied.
 
-Then use the smoke-test requests above against <http://127.0.0.1:3000>. The image sets the bind
-address for container networking and exposes port 3000; the application still defaults to loopback
-when run directly on the host.
+Then use the smoke-test requests above against <http://127.0.0.1:3000>. The image defaults to
+port 3000. To change the container port, use `-e PORT=3100 -p 127.0.0.1:3100:3100`
+and send requests to <http://127.0.0.1:3100>.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `APP_BIND_ADDR` | `127.0.0.1:3000` | Socket address used by the Rust HTTP listener. Use `0.0.0.0:3000` when the process must accept connections outside its own network namespace. |
+| `PORT` | `3000` | Decimal TCP port from `1` to `65535`. Invalid values fail startup with a `PORT` error. |
 | `LOG_LEVEL` | `info` | Accepts exactly `off`, `error`, `warn`, `info`, `debug`, or `trace`. Unset or invalid values use `info`. |
+
+The listener uses `0.0.0.0:${PORT}` in native and container runs, so native runs
+accept connections on all IPv4 interfaces. `APP_BIND_ADDR` is no longer read.
+Use `PORT=3100 cargo run --locked` to serve a different port. Deployment owns
+exposure through container publishing, Tailscale, or a proxy.
 
 `LOG_LEVEL` is the shared logging contract for household services, independent of their
 implementation language. Each service owns its internal mapping to its logging library.

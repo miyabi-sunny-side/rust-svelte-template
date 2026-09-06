@@ -1,17 +1,16 @@
 mod logging;
+mod port;
 
-use std::{env, error::Error, net::SocketAddr};
+use std::{error::Error, net::SocketAddr};
 
 use tokio::net::TcpListener;
 use tracing::info;
-
-const DEFAULT_BIND_ADDR: &str = "127.0.0.1:3000";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     logging::init();
 
-    let bind_addr = bind_addr_from_env()?;
+    let bind_addr = SocketAddr::from(([0, 0, 0, 0], port::from_env()?));
     let listener = TcpListener::bind(bind_addr).await?;
     info!(%bind_addr, "server listening");
 
@@ -21,13 +20,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("server stopped");
     Ok(())
-}
-
-fn bind_addr_from_env() -> Result<SocketAddr, Box<dyn Error>> {
-    env::var("APP_BIND_ADDR")
-        .unwrap_or_else(|_| DEFAULT_BIND_ADDR.to_owned())
-        .parse()
-        .map_err(Into::into)
 }
 
 async fn shutdown_signal() {
