@@ -133,12 +133,16 @@ mod tests {
 
     use super::app;
 
+    async fn get(uri: &str) -> axum::response::Response {
+        app()
+            .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+            .await
+            .unwrap()
+    }
+
     #[tokio::test]
     async fn ui_is_available_without_a_static_directory() {
-        let response = app()
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
-            .await
-            .unwrap();
+        let response = get("/").await;
         assert_eq!(response.status(), StatusCode::OK);
         let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
         assert!(body.starts_with(b"<!doctype html>"));
@@ -147,10 +151,7 @@ mod tests {
 
     #[tokio::test]
     async fn compiled_assets_are_served_with_their_content_types() {
-        let response = app()
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
-            .await
-            .unwrap();
+        let response = get("/").await;
         let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
         let html = std::str::from_utf8(&body).unwrap();
         for (attribute, extension, content_type) in [
@@ -163,10 +164,7 @@ mod tests {
                 .filter_map(|part| part.split('"').next())
                 .find(|path| path.ends_with(extension))
                 .expect("compiled HTML references its asset");
-            let response = app()
-                .oneshot(Request::builder().uri(asset).body(Body::empty()).unwrap())
-                .await
-                .unwrap();
+            let response = get(asset).await;
             assert_eq!(response.status(), StatusCode::OK);
             assert_eq!(response.headers()["content-type"], content_type);
             let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
@@ -211,15 +209,7 @@ mod tests {
 
     #[tokio::test]
     async fn liveness_is_lightweight_plain_text() {
-        let response = app()
-            .oneshot(
-                Request::builder()
-                    .uri("/healthz")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = get("/healthz").await;
 
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(
@@ -230,15 +220,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_health_returns_stable_json() {
-        let response = app()
-            .oneshot(
-                Request::builder()
-                    .uri("/api/health")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = get("/api/health").await;
 
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(
@@ -249,15 +231,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_items_lists_the_demo_fixtures() {
-        let response = app()
-            .oneshot(
-                Request::builder()
-                    .uri("/api/items")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = get("/api/items").await;
 
         assert_eq!(response.status(), StatusCode::OK);
         let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
@@ -270,15 +244,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_item_detail_returns_the_matching_item() {
-        let response = app()
-            .oneshot(
-                Request::builder()
-                    .uri("/api/items/theme")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = get("/api/items/theme").await;
 
         assert_eq!(response.status(), StatusCode::OK);
         let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
@@ -289,15 +255,7 @@ mod tests {
 
     #[tokio::test]
     async fn api_item_detail_rejects_unknown_ids() {
-        let response = app()
-            .oneshot(
-                Request::builder()
-                    .uri("/api/items/missing")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = get("/api/items/missing").await;
 
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
@@ -305,10 +263,7 @@ mod tests {
     #[tokio::test]
     async fn unknown_api_routes_do_not_fall_back_to_the_spa() {
         for uri in ["/api", "/api/", "/api/missing"] {
-            let response = app()
-                .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
-                .await
-                .unwrap();
+            let response = get(uri).await;
 
             assert_eq!(response.status(), StatusCode::NOT_FOUND);
         }
@@ -316,15 +271,7 @@ mod tests {
 
     #[tokio::test]
     async fn unknown_client_routes_return_the_spa_with_success() {
-        let response = app()
-            .oneshot(
-                Request::builder()
-                    .uri("/projects/example")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+        let response = get("/projects/example").await;
 
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(response.headers().get("content-type").unwrap(), "text/html");
