@@ -138,20 +138,25 @@ Then use the smoke-test requests above against <http://127.0.0.1:3000>. The imag
 port 3000. To change the container port, use `-e PORT=3100 -p 127.0.0.1:3100:3100`
 and send requests to <http://127.0.0.1:3100>.
 
-## Configuration
+## Environment variables
 
-| Variable | Default | Purpose |
+Both application settings are optional and are read at startup.
+
+| Variable | Default when unset | Purpose / invalid values |
 | --- | --- | --- |
-| `PORT` | `3000` | Decimal TCP port from `1` to `65535`. Invalid values fail startup with a `PORT` error. |
-| `LOG_LEVEL` | `info` | Accepts exactly `off`, `error`, `warn`, `info`, `debug`, or `trace`. Unset or invalid values use `info`. |
+| `PORT` | `3000` | Decimal TCP port from `1` to `65535`. Empty, non-Unicode, signed, whitespace-padded, nonnumeric or out-of-range values fail startup with a `PORT` error. |
+| `LOG_LEVEL` | `info` | Logging verbosity: exactly `off`, `error`, `warn`, `info`, `debug`, or `trace`. Empty, non-Unicode or invalid values (including uppercase and module filters) use `info`. |
+
+The readers are [`src/port.rs`](src/port.rs) and [`src/logging.rs`](src/logging.rs).
+Build-time Cargo/CI variables are not runtime application settings.
 
 The listener uses `0.0.0.0:${PORT}` in native and container runs, so native runs
 accept connections on all IPv4 interfaces. `APP_BIND_ADDR` is no longer read.
 Use `PORT=3100 cargo run --locked` to serve a different port. Deployment owns
 exposure through container publishing, Tailscale, or a proxy.
 
-`LOG_LEVEL` is the shared logging contract for household services, independent of their
-implementation language. Each service owns its internal mapping to its logging library.
+The template uses the shared `LOG_LEVEL` contract and ignores the former `RUST_LOG`.
+Other services may still use their own logging configuration; consult their README.
 
 No application secrets, database, authentication provider, or deployment-provider settings are
 required. Add those explicitly when the project needs them rather than carrying unused template
