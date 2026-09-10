@@ -69,6 +69,30 @@ describe("Home", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("filters item names while typing, clears and distinguishes no match from empty", async () => {
+    const items = ITEMS.map((item, index) => ({
+      ...item,
+      name: index === 0 ? "Theme 切替" : item.name,
+    }));
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse(items));
+    vi.stubGlobal("fetch", fetchMock);
+    render(Home);
+    await waitFor(() => expect(listContainer().dataset.state).toBe("success"));
+    const input = screen.getByRole("searchbox", { name: "名前で検索" });
+    await fireEvent.input(input, { target: { value: "THEME" } });
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.getByRole("link").getAttribute("href")).toBe("/items/theme");
+    await fireEvent.input(input, { target: { value: "router" } });
+    expect(screen.queryAllByRole("link")).toHaveLength(0);
+    expect(screen.getByText("一致する項目がありません")).toBeTruthy();
+    expect(screen.queryByText("項目がありません")).toBeNull();
+    await fireEvent.input(input, { target: { value: "" } });
+    expect(screen.getAllByRole("link")).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("reloads the list when the tab becomes visible again", async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

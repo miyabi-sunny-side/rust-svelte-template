@@ -68,6 +68,16 @@ Open <http://127.0.0.1:5173>. Vite proxies `/api` requests to
 `http://127.0.0.1:3000`. The Rust server's `/healthz` endpoint remains available directly on port
 3000.
 
+## Live search example
+
+[`Home.svelte`](client/src/pages/Home.svelte) demonstrates an editable search field
+with a decorative search icon on its left. Typing filters the API-backed list by
+item name immediately; clearing restores it, and no matches has its own message.
+Copy the `query`/`matches` expression and labelled `.search-field` markup/styles
+with the `search` entry from [`Icon.svelte`](client/src/lib/Icon.svelte), then adapt
+them to the derived project's own data and `DESIGN.md`. There is no runtime
+dependency or automatic synchronization with this template.
+
 ## Verify changes
 
 Run the complete local verification set from the repository root:

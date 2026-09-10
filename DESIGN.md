@@ -385,7 +385,13 @@ currently uses it.
   storage) and **does not close the modal** — the user watches the
   theme change live. Close via ×, Esc, or scrim; focus returns to the
   hamburger.
-- **Top page — card list:** cards per the family recipe
+- **Top page — card list:** a labelled search input (名前で検索) first
+  demonstrates live filtering of the fetched items by case-insensitive name
+  substring, without Enter or a submit button. A muted decorative `search`
+  dictionary icon sits inside its left edge: aria-hidden, unfocusable, no action.
+  The input stays editable and follows the Inputs recipe. Clearing restores all
+  items; no matches reads 一致する項目がありません, distinct from an empty API list.
+  Search text survives a tab-visible reload. Cards per the family recipe
   (surface-raised, 1px hairline, 8px radius, 10px padding) in a single
   column with 8px gaps; each card links to its detail page and shows the
   item name (label) and updated-at (caption muted). The list container
@@ -472,7 +478,11 @@ currently uses it.
      it. Item 1 reads テーマ設定 and opens the centered theme modal.
   8. A detail page's sub-header contains the item title and zero
      buttons or links.
-  9. The アイコン辞書 detail page renders exactly `ICON_NAMES.length`
+  9. Home search filters on input, clears to all items, distinguishes no matches
+     from empty/error, and retains detail links. At 320px and up in both themes,
+     the field and cards fit the viewport; keyboard focus skips the decorative
+     icon, and the input uses the shared focus ring.
+  10. The アイコン辞書 detail page renders exactly `ICON_NAMES.length`
      specimen tiles, none focusable; each icon box computes to
      36×36px / 1px border / 6px radius with the entry name as a muted
      caption.
