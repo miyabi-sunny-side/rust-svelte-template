@@ -264,3 +264,25 @@ their own runtime requirements before choosing a different tradeoff.
 ## License
 
 This template is available under the [MIT License](LICENSE).
+
+## List layout regression checks
+
+`client/src/global.sass` owns the `.content` spacing and the opt-in `.content-wide` /
+`.table-scroll` recipes for dense tables. Copy the needed styles and
+`client/e2e/layout.spec.ts` into derived products, then adapt columns and measurements
+to their own DESIGN.md. The HTML table fixture is test-only and excluded from the build.
+Cards and table rows scroll with the document; wide tables scroll horizontally locally.
+
+```sh
+cd client
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+CI runs these browser checks alongside the existing unit tests. They measure content
+position, visible rows, overflow and wheel behavior at four sizes in both themes,
+and exercise search, long names, loading, empty, failure recovery and keyboard focus.
+
+The Home measurements include its app header and search field. The standalone table
+fixture has neither; its top-position budget covers only content padding and column
+headings. Derived products must measure their complete screen before setting a budget.

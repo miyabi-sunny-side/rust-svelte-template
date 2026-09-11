@@ -95,6 +95,29 @@ a
   .content
     padding: var(--sp-5) var(--sp-3)
 
+// Dense lists keep document scrolling; only their horizontal overflow is local.
+.content-wide
+  max-width: none
+
+.table-scroll
+  overflow-x: auto
+
+  table
+    width: 100%
+    min-width: 640px
+    border-collapse: collapse
+    font-size: var(--fs-sm)
+    line-height: 24px
+
+  th, td
+    padding: var(--sp-1) var(--sp-2)
+    border-bottom: 1px solid var(--c-border)
+    text-align: left
+
+  th
+    color: var(--c-muted)
+    font-weight: 500
+
 .btn
   padding: var(--sp-2) 14px
   border: 1px solid var(--c-border)

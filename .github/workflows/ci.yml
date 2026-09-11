@@ -42,6 +42,12 @@ jobs:
       - name: Test frontend
         run: npm --prefix client test
 
+      - name: Install Chromium
+        run: npx --prefix client playwright install --with-deps chromium
+
+      - name: Test browser layout
+        run: npm --prefix client run test:e2e
+
       - name: Build frontend
         run: npm --prefix client run build
 

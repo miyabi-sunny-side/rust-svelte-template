@@ -144,6 +144,8 @@
       background: var(--c-hover-1)
 
   .name
+    min-width: 0
+    overflow-wrap: anywhere
     font-size: var(--fs-md)
     font-weight: 500
 
