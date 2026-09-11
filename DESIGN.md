@@ -1,22 +1,8 @@
 ---
 version: alpha
 name: Sumi / rust-svelte-template
-description: >
-  Self-contained design contract for rust-svelte-template — the
-  canonical starter of the Sumi family for screen-first web tools.
-  Dark theme is Sumi (the CSS default), light theme is Kinari; Washi
-  is deliberately not adopted. Derived projects copy this repository,
-  then re-declare their own accent and storage-key prefix here.
-  Consulted: Sumi + Kinari canonical templates @ 2026-08-07. This file
-  is the sole ongoing styling authority for this repository.
+description: SumiとKinariを使うWebツールの共通デザイン原本。
 colors:
-  # Kinari (light) palette — the set designmd validates. designmd has no
-  # theme concept, so the Sumi (dark) counterpart of every token lives in
-  # the Colors section below (Kinari / Sumi pairs) and is implemented in
-  # client/src/global.sass. `primary` duplicates `accent` because designmd
-  # requires a key color named primary; the family vocabulary is "accent".
-  # Derived projects MUST replace the amber accent pair with their own
-  # identity color.
   primary: "#9a6a00"
   accent: "#9a6a00"
   accent-subtle: "rgba(154, 106, 0, 0.10)"
@@ -29,9 +15,6 @@ colors:
   link: "#14506e"
   danger: "#9c2b1d"
   danger-subtle: "#f9e9e4"
-  # Sprinkle indirection hooks (see Colors): neutral in Sumi, accent wash
-  # in Kinari. Components consume these, never accent-subtle directly,
-  # for band/hover jobs.
   wash-base: "#f6efe0"
   wash-raised: "#faf4ea"
   hover-1: "rgba(154, 106, 0, 0.10)"
@@ -74,9 +57,6 @@ spacing:
   sp-4: 16px
   sp-5: 24px
 components:
-  # Quiet controls (button-quiet, icon-button, badge) render with a
-  # transparent background at runtime; the backgroundColor below is the
-  # backdrop they typically sit on, so contrast is checked against it.
   app-header:
     backgroundColor: "{colors.wash-base}"
     textColor: "{colors.on-surface}"
@@ -154,359 +134,179 @@ components:
     padding: 4px
 ---
 
-# rust-svelte-template — Sumi Family Starter
+# rust-svelte-template
 
 ## Overview
 
-This template is the **canonical starting point of the Sumi family** for
-Rust + Svelte web tools. It ships a working app shell — header, menu,
-theme system, a card-list top page and a generic detail page — so that a
-derived project begins life already speaking the family language instead
-of reinventing chrome.
+Sumi familyの共通デザイン原本と、動くRust + Svelteのひな形を提供する。
+日常的に使う道具として、内容を主役にし、操作部品は必要な場所に置く。
+情報を足す前に、既存の表示で分かるか、操作時だけ示せば足りるかを判断する。
 
-The personality is **calm, quiet, and tool-like**: content first, chrome
-recedes into neutral ink tones, color only where it means something. The
-audience is one professional web engineer who uses these tools daily next
-to a terminal; density is welcome, onboarding is not.
-
-Two named themes with fixed jobs:
-
-- **Sumi (墨) — dark, the default.** `:root` IS Sumi. Design here first.
-- **Kinari (生成り) — light, for screens.** Warm cream surfaces, sepia
-  ink, and a limited license to decorate with faint accent washes.
-
-**Washi is deliberately not adopted.** This template targets ordinary
-screens; a derived project that must serve e-paper replaces Kinari with
-Washi in its own DESIGN.md and re-audits contrast — it does not layer
-Washi on top of this contract.
-
-This document is **self-contained**: it was bootstrapped from the Sumi
-and Kinari canonical templates (consulted 2026-08-07) but depends on
-neither. All rules a derived project needs are stated here.
-
-### Deriving a project
-
-A derived project copies the repository, then edits this file:
-
-1. Rename `name` / `description` in the frontmatter.
-2. **Declare its own primary accent** (Kinari + Sumi pair) replacing the
-   template amber; optionally a secondary accent with an explicit,
-   distinct persistent role (never decorative).
-3. Rename the theme storage key `rust-svelte-template:theme` to
-   `<project>:theme`.
-4. Add domain data colors and domain components below the shared rules.
-5. Keep the result self-contained — never re-point rules at external
-   templates.
+派生製品は本書を取り込み、目的・画面・データに合わせて編集する。
+アクセントの明暗の組と `rust-svelte-template:theme` の保存キーは製品固有に変える。
+採用後は各製品のroot DESIGN.mdを正とし、原本の更新を自動で上書きしない。
+使わない部品や説明例を残さず、外部の文書なしで実装判断ができる規則を残す。
 
 ## Colors
 
-Every color is a CSS custom property (`--c-*`); components never hardcode
-hex. The frontmatter carries the Kinari (light) palette; the Sumi (dark)
-counterpart of every token is listed below as a Kinari / Sumi pair and
-implemented in `client/src/global.sass`.
+暗色はSumi、通常画面の明色はKinariとする。Sumiから設計し、両方で検証する。
+Washiはe-paperを実際に扱う派生製品がKinariと置き換える。2つの明色テーマを重ねない。
+色は `client/src/global.sass` のCSS変数を使う。frontmatterはKinariの値を持つ。
 
-- **Surface (#faf6ef / #191919):** page background. Warm cream / ink
-  off-black — never pure white or pure black.
-- **Surface Raised (#fffdf8 / #232323):** cards, modals, bands.
-- **On-Surface (#3a2f28 / #e6e6e6):** primary text. ~11:1 on Kinari
-  surface, comfortably AA+ on Sumi.
-- **Muted (#6f6257 / #9a9a9a):** secondary text, captions, metadata,
-  quiet icons. ≥ 4.5:1 (AA) against surface in both themes.
-- **Border (#e3d9c9 / #333333):** 1px hairlines — the primary separation
-  tool of this flat system.
-- **Accent (#9a6a00 / #e0a800):** the project identity color (template
-  default: family amber). Marks the primary action, the focus ring, the
-  selected state, the spinner — "you are here / this is the main move".
-  One accent-filled element per screen region. The selected-state tint is
-  `accent-subtle` (rgba(154,106,0,.10) / rgba(224,168,0,.15)).
-- **Link (#14506e / #7fdbff)**, **Danger (#9c2b1d / #ff6b6b)** with
-  `danger-subtle` tints (#f9e9e4 / #3a1a1a) for error banners.
-- **Scrim (rgba(58,47,40,.4) / rgba(0,0,0,.6)):** modal backdrop.
+| 役割 | Kinari | Sumi |
+|---|---|---|
+| surface | #faf6ef | #191919 |
+| surface-raised | #fffdf8 | #232323 |
+| on-surface | #3a2f28 | #e6e6e6 |
+| muted | #6f6257 | #9a9a9a |
+| border | #e3d9c9 | #333333 |
+| accent / primary | #9a6a00 | #e0a800 |
+| accent-subtle | rgba(154,106,0,.10) | rgba(224,168,0,.15) |
+| link | #14506e | #7fdbff |
+| danger | #9c2b1d | #ff6b6b |
+| danger-subtle | #f9e9e4 | #3a1a1a |
+| scrim | rgba(58,47,40,.4) | rgba(0,0,0,.6) |
+| wash-base | #f6efe0 | #232323 |
+| wash-raised | #faf4ea | #191919 |
+| hover-1 | rgba(154,106,0,.10) | #333333 |
+| hover-2 | rgba(154,106,0,.16) | #3d3d3d |
 
-**Sprinkle indirection (the Kinari license, made mechanical).** Four
-semantic hooks decouple "where warmth appears" from component code:
+`primary` はlint用に `accent` と同値を持つ。製品の色名はaccentを使う。
+背景・補助情報・通常操作は無彩色を基本とする。Kinariでは表の淡い色を許す。
+帯にはwash、ホバーにはhoverの変数を使い、accent-subtleを直接流用しない。
+アクセントは主操作・フォーカス・小さな選択表示・処理中のスピナーに使う。
+塗りつぶす主操作は画面に最大1つとし、領域を分けて増やさない。
+大きな選択行は背景の濃淡で示し、強いアクセントの面と縁取りを重ねない。
+小さなラジオの選択表示にはaccent-subtleを使える。
 
-| Hook              | Job                                      | Sumi resolves to        | Kinari resolves to     |
-| ----------------- | ---------------------------------------- | ----------------------- | ---------------------- |
-| `--c-wash-base`   | app-header band background               | `#232323` (raised)      | `#f6efe0` (amber wash) |
-| `--c-wash-raised` | sub-header / sticky band background      | `#191919` (page surface — the band sits flush with the page, separated by its hairline alone) | `#faf4ea` (faint wash) |
-| `--c-hover-1`     | hover fill (buttons, rows, menu items)   | `#333333` (border gray) | `rgba(154,106,0,.10)`  |
-| `--c-hover-2`     | pressed / active-row fill                | `#3d3d3d`               | `rgba(154,106,0,.16)`  |
+副アクセントは、主アクセントと異なる持続的な役割がある場合だけ製品側で定める。
+分類などのデータ色は操作の色と分け、製品側で用途を定める。
+色の意味は文字・形・アクセシビリティ属性でも示す。
+通常文字は両テーマでWCAG AAの4.5:1以上を保つ。主ボタンの文字色はsurface-raisedとする。
 
-Components consume the hook, never `accent-subtle` directly, for these
-jobs. Sumi stays strictly neutral; Kinari warms up with zero
-per-component branching. Washes are decoration only — every meaning they
-touch must also be carried by text or shape.
+### テーマの状態
 
-**Theme mechanism.** `:root` carries the Sumi values and
-`color-scheme: dark`. Kinari is applied by two equivalent blocks (kept
-identical via one Sass mixin), each also setting `color-scheme: light`:
-
-- `:root[data-theme="light"]` — explicit user choice;
-- `@media (prefers-color-scheme: light)` → `:root:not([data-theme="dark"])`
-  — OS decides when no explicit choice is set.
-
-`data-theme` on `<html>` takes `"dark"` or `"light"`; the auto setting
-**removes the attribute** (and the storage key) so the OS rules.
-Preference persists in `localStorage` under `rust-svelte-template:theme`
-(derived projects rename, see above) and is applied before first paint.
-
-The primary button sets its text with the `surface-raised` token, so it
-is dark-on-amber in Sumi (≈ 8:1) and warm-white-on-amber in Kinari
-(≥ 4.5:1) with no extra token. All text keeps WCAG AA in both themes.
+`:root` をSumiの値と `color-scheme: dark` にする。
+`data-theme="light"` でKinari、`data-theme="dark"` でSumiを明示指定する。
+自動では属性と保存キーを削除し、OSの `prefers-color-scheme` に従う。
+Kinariの明示指定とOS委任は同じSass mixinから出力し、`color-scheme: light` を設定する。
+設定はlocalStorageへ保存し、初回描画前に適用する。状態をコンポーネント内だけに保持しない。
 
 ## Typography
 
-One typeface — the platform `system-ui` stack. No webfonts. Exactly five
-roles, exposed as font-size tokens `--fs-xs..xl` (12/14/15/16/17px):
-
-- **Title (`--fs-xl` 17px / 600 / 1.3):** screen and item titles, modal
-  headers. Single line, ellipsized.
-- **Body (`--fs-lg` 16px / 400 / 1.6):** main reading text. Never smaller.
-- **Body Small (`--fs-sm` 14px / 400 / 1.5):** summaries, list subtitles,
-  state messages.
-- **Label (`--fs-md` 15px / 500 / 1.2):** buttons, menu items, the app
-  title.
-- **Caption (`--fs-xs` 12px / 400 / 1.4):** timestamps, statuses,
-  metadata — always `muted` unless carrying a data color.
-
-If a new size feels needed, use weight or muted color instead.
+書体はsystem-uiとし、Webフォントを追加しない。サイズ・太さ・行高はfrontmatterの5役割を使う。
+タイトルは1行で省略し、本文は16px以上とする。補助文は14px、ラベルは15px、注記は12pxを使う。
+注記はデータ色を持つ場合を除いてmutedとする。階層は色と太さで示し、独自サイズを増やさない。
 
 ## Layout
 
-The shell stacks three rows:
+### 内容と補助情報
 
-1. **App header — invariant on every page.** Sticky, 48px, full width,
-   `--c-wash-base` background, 1px bottom hairline. Contents are exactly
-   two: the app title as a home link (`<a href="/">`, label type,
-   on-surface ink, no underline — left) and the hamburger icon-button
-   (right). **The title is the header's only navigation link**; all
-   other navigation lives inside the menu, so phone widths never crowd.
-2. **Sub-header — detail screens only.** 40px, `--c-wash-raised`, 1px
-   bottom hairline, holding only the current item's title (label,
-   single line, ellipsized). No back button — going back is the header
-   title link or the browser itself.
-3. **Main content**, the only scrolling region.
+一覧や本文を最初の画面で見せる。現在地・選択対象・件数が既存の表示で分かるなら、説明帯を追加しない。
+検索・主要操作は見出しの近くへまとめ、ヘルプ・確認・詳細説明は必要な操作から開く。
+異常時の通知は必要だが、通常時に空の通知領域を予約しない。
 
-One breakpoint: **768px**. Below it, a single column with `--sp-3` side
-gutters; at and above, the content column centers at max-width 720px with
-`--sp-5` gutters. Bands stay full-width at all widths. The page never
-scrolls horizontally at 320px and up.
+縦方向はページの通常スクロールを使う。表の列見出しも行と一緒に流す。
+固定見出しのための内側縦スクロール、高さ制限、残り高さの計算を標準の一覧へ持ち込まない。
+狭幅の表は必要な横スクロールだけを表内へ収める。
+カード向けの幅を密な表や全画面の画像へ適用しない。製品ごとの用途をroot DESIGN.mdで定める。
 
-Spacing snaps to the 4px scale `--sp-1..5` (4/8/12/16/24px). Default
-rhythm: 8px gap between cards, 10px card padding, 16px modal padding.
-No off-scale values.
+### ひな形の画面構成
+
+- app headerは全幅・高さ48px・stickyとし、wash-baseと1pxの下境界を使う。
+  左にホームへ戻るアプリ名、右に36pxのメニューボタンを置く。リンクはアプリ名だけとする。
+- 詳細のsub-headerは高さ40pxで、wash-raisedと1pxの下境界を使う。
+  現在の項目名だけを1行で示し、ボタンやリンクを置かない。既存のheader下への固定を保つ。
+- 本文は通常の文書フローで続く。mainに独立した縦スクロール領域を作らない。
+
+これらの既存headerは、表の列見出しとは別の部品である。
+ブレークポイントは768px。カード・本文の列は中央配置で最大720pxとする。
+左右の余白は12px、上下は狭幅16px・広幅24pxとする。幅320px以上でページを横にはみ出させない。
+余白は4/8/12/16/24pxを使う。カード内10px、通常ボタンの横14pxは部品固有の値とする。
 
 ## Elevation & Depth
 
-The system is **flat**. Hierarchy comes from tonal layers (surface →
-surface-raised → wash bands) plus 1px hairlines. Exactly one shadow
-exists: floating modals/menus cast `0 8px 32px rgba(0, 0, 0, 0.25)` over
-the scrim. No other `box-shadow` anywhere.
-
-**Focus ring:** defined once globally on `:focus-visible` —
-`outline: 2px solid var(--c-accent); outline-offset: 2px`. The UA
-default ring is suppressed only because this replaces it; focus
-indication is never removed outright.
+階層は面の濃淡と1pxの境界で示す。
+影はメニューとモーダルの `0 8px 32px rgba(0,0,0,.25)` だけに使う。
+フォーカスは共通の `:focus-visible` に2pxのaccent色の輪郭と2pxの間隔を設ける。
+ブラウザ既定の輪郭を抑止する場合も、この可視リングを残す。
 
 ## Shapes
 
-Soft-rectangle language, tokens `--radius-sm/md/lg/full` (6/8/12/9999px):
-
-- **sm (6px):** buttons, inputs, all small controls.
-- **md (8px):** cards and list rows.
-- **lg (12px):** modals and floating menus.
-- **full:** count pills and the status badge only.
-
-Never mix radii within one composite control. No circular buttons.
-
-## Iconography
-
-All icons come from **one dictionary component**,
-`client/src/lib/Icon.svelte`: `<Icon name="menu" />` renders inline SVG
-on a 24×24 grid — `fill="none" stroke="currentColor" stroke-width="2"
-stroke-linecap="round" stroke-linejoin="round"` (Lucide style), default
-size `1.2em`, baseline-aligned, inheriting the text color of its context.
-
-Current dictionary: `menu`, `x`, `sun`, `moon`, `monitor`,
-`chevron-left`, `trash`, `megaphone`, `megaphone-off`, `pencil`,
-`refresh-cw`, `check-check`, `mail`, `book`, `search`, `star`,
-`star-filled`.
-
-Outline is the unnamed default: a `-filled` variant shares its outline
-sibling's geometry and overrides `fill` to `currentColor` on the shape
-itself — the root svg stays `fill="none"` for every entry. A filled
-variant is a visual state only; the control using it must still carry
-that state accessibly (e.g. `aria-pressed`), never through color alone.
-
-`Icon.svelte` also exports `ICON_NAMES`, the canonical array of every
-dictionary entry. Anything that enumerates the dictionary — the
-アイコン辞書 fixture's specimen page — renders from that export, never
-from a hand-copied list. The dictionary is a vocabulary, not a usage
-report: an entry (e.g. `chevron-left`) stays even while no screen
-currently uses it.
-
-- **Emoji are banned as UI icons**, and so are text glyphs standing in
-  for icons (▲ ▼ × ☰ ▶ …) — always an SVG entry in the dictionary.
-- **Adoption rule:** this template's dictionary is the family's
-  canonical copy source. A derived project adds new icons to its own
-  `Icon.svelte`; icons that prove generally useful are normalized to the
-  24×24 Lucide grammar above and adopted into this dictionary first.
-  After adoption, each project receives an explicit, separate delivery
-  that replaces its local or inline SVGs with the template's
-  name-and-geometry entry — no automatic sync, no submodule, no runtime
-  dependency; every project's DESIGN.md and build stay self-contained.
+角丸は小部品6px、カード8px、モーダルとメニュー12pxとする。
+9999pxは件数と状態のバッジだけに使う。同じ操作部品で角丸を混ぜず、円形ボタンを作らない。
 
 ## Components
 
-- **App header:** per Layout. The title link keeps on-surface ink with
-  no underline (chrome, not content — the `link` token is for body
-  links). The hamburger is a 36px quiet icon-button with `aria-label`
-  and `aria-expanded`.
-- **Menu (from the hamburger):** a dropdown panel spatially anchored to
-  the hamburger, not a modal — absolutely positioned at `top: 100%` /
-  `right: 0` within the header's positioned right slot, `min-width`
-  180px, surface-raised background, 1px hairline border, lg radius with
-  `overflow: hidden`, and the single floating shadow. There is **no
-  scrim**; a transparent `position: fixed` full-viewport close button
-  sits behind the panel so any outside click closes it. Esc also
-  closes; closing always returns focus to the hamburger, and
-  `aria-expanded` mirrors the open state. Items are full-width
-  borderless rows — label type, `--sp-2`/`--sp-3` padding, left
-  aligned, transparent background, hover `--c-hover-1`, square corners
-  clipped by the panel's lg radius. **Item 1 is always テーマ設定**,
-  which opens the centered theme settings modal; page-navigation links
-  of derived projects follow it. There is no トップ/home item — the
-  header title already is the home link.
-- **Theme settings modal:** opened from the menu's テーマ設定 item; the
-  centered modal (lg radius, 16px padding, scrim + shadow) holding a
-  `role="radiogroup"` with three radios — 自動 (`monitor`), ライト
-  (`sun`), ダーク (`moon`). Selecting applies immediately (attribute +
-  storage) and **does not close the modal** — the user watches the
-  theme change live. Close via ×, Esc, or scrim; focus returns to the
-  hamburger.
-- **Top page — card list:** a labelled search input (名前で検索) first
-  demonstrates live filtering of the fetched items by case-insensitive name
-  substring, without Enter or a submit button. A muted decorative `search`
-  dictionary icon sits inside its left edge: aria-hidden, unfocusable, no action.
-  The input stays editable and follows the Inputs recipe. Clearing restores all
-  items; no matches reads 一致する項目がありません, distinct from an empty API list.
-  Search text survives a tab-visible reload. Cards per the family recipe
-  (surface-raised, 1px hairline, 8px radius, 10px padding) in a single
-  column with 8px gaps; each card links to its detail page and shows the
-  item name (label) and updated-at (caption muted). The list container
-  exposes `data-state="loading|empty|error|success"`:
-  - _loading:_ centered muted body-sm text with the accent spinner
-    (1.5px-stroke circle, 1.1rem);
-  - _empty:_ centered muted body-sm message;
-  - _error:_ danger-colored body-sm message plus a default retry button;
-  - _success:_ the cards.
-- **Detail page — generic fixture:** sub-header (title only) over a
-  content column showing summary (body), status (an outline badge —
-  caption type, 1px border, muted text; neutral chrome, not a data
-  color), updated-at (caption muted), and body text (body, 1.6).
-- **Icon dictionary fixture (`id: icons`):** this fixture's detail page
-  appends a live specimen of the whole dictionary below the standard
-  fields: a non-interactive list (`ul`/`li` — no `button`, no `a`,
-  nothing focusable) with one tile per entry of `ICON_NAMES`. Each tile
-  is the icon centered in a 36px square styled by the icon-button
-  recipe (surface-raised, 1px hairline, sm radius) with the entry name
-  beneath as muted caption, tiles flowing in a responsive grid with
-  `--sp-2` gaps. Specimens look like the control they document but are
-  not pressable — a button that does nothing is worse than a picture.
-- **Buttons:** default = surface-raised bg, 1px hairline, label type,
-  sm radius, 8×14px padding, hover fills `--c-hover-1`. Primary =
-  accent bg, `surface-raised`-token text — at most one per screen.
-  Quiet = transparent, for icon-buttons in bars. Disabled = 50%
-  opacity, no pointer.
-- **Inputs:** surface bg (one layer below their container), 1px
-  hairline, sm radius, body type; focus swaps border to accent under
-  the shared focus ring. Labels are caption muted above the field.
-- **Modals:** centered, lg radius, 16px padding, scrim + the single
-  permitted shadow; close via ×, Esc, scrim; content scrolls
-  internally, max-height 80dvh.
-- **Motion:** utilitarian only — height/opacity transitions ≤ 150ms and
-  the spinner. Honor `prefers-reduced-motion: reduce` by disabling both.
-- **Navigation state:** every page has a router-backed URL; reloads
-  restore the same view. The chosen theme is never held only in
-  component state.
+### アイコン
 
-## Implementation Mapping
+`client/src/lib/Icon.svelte` を辞書の正とする。絵文字や文字記号をアイコンの代わりに使わない。
+SVGは24×24、currentColorの2px線、丸い端と角、通常は塗りなしとする。
+サイズは1.2emで文字の基準線にそろえる。filled版は同じ形状を塗り、状態は属性でも示す。
+列挙には `ICON_NAMES` を使い、別の手書き一覧を作らない。未使用だけを理由に辞書項目を削らない。
+汎用的な追加は原本の辞書へ採用し、派生製品が明示的に取り込む。実行時依存やsubmoduleは不要。
 
-- Styling is **Sass indented syntax (`.sass`)** with **normalize.css**
-  imported first.
-- All tokens live in `client/src/global.sass` on `:root` (Sumi values);
-  the two equivalent Kinari blocks are emitted from a single Sass mixin
-  so they cannot drift.
-- Canonical custom-property names: colors `--c-<token>`
-  (`--c-surface`, `--c-on-surface`, `--c-accent`, `--c-wash-base`, …),
-  spacing `--sp-1..--sp-5`, font sizes `--fs-xs..--fs-xl`, radii
-  `--radius-sm/md/lg/full`. Components consume variables only.
-- Theme bootstrap script: read `rust-svelte-template:theme`; `"light"` /
-  `"dark"` set `data-theme` on `<html>` before first paint; absent key
-  (auto) leaves the attribute off. `Icon.svelte` is the sole icon
-  source.
+### メニューとテーマ設定
+
+メニューは右上のボタンに接するドロップダウンとする。
+上端をheader下端、右端をボタン右端へそろえる。最小幅180px、1pxの枠と12pxの角丸を使う。
+背景はsurface-raised、項目は全幅の行とし、余白は上下8px・左右12pxを使う。
+メニューにscrimは付けない。背面の透明な閉じるボタンで外側クリックを受ける。
+Escでも閉じ、フォーカスをメニューボタンへ戻す。開閉は `aria-expanded` に反映する。
+先頭は「テーマ設定」、以降は製品の画面リンクとする。ホーム項目は重複するため置かない。
+
+テーマ設定は中央のモーダルで開く。
+自動・ライト・ダークの3つのラジオにmonitor/sun/moonのアイコンを使う。
+選択は即時反映し、確認できるようモーダルを閉じない。
+閉じるボタン・Esc・scrimで閉じ、メニューボタンへフォーカスを戻す。
+
+### 一覧と詳細
+
+ホームは名前と更新日時を示すカードの1列一覧とする。
+カードはsurface-raised、1pxの枠、8pxの角丸、10pxの内側余白、8pxの間隔を使う。
+各カードから項目の詳細へ移動できるようにする。
+ラベル付きの検索欄「名前で検索」は入力中に、大文字小文字を区別しない部分一致で絞り込む。
+Enterや送信は不要。消去で全件へ戻し、タブが再表示された際の再取得でも検索文字を保つ。
+検索アイコンは装飾として隠し、フォーカスや操作を持たせない。
+
+一覧の `data-state` はloading/empty/error/successとする。
+読込中は控えめな14pxの文字とスピナーを示す。
+空の説明と取得失敗を区別し、失敗時にはdanger色の説明と再試行を示す。
+検索の不一致を「一致する項目がありません」と示し、データ自体が空の場合と区別する。
+詳細はタイトルの下に概要・状態・更新日時・本文を置く。状態は枠付きの控えめな注記バッジとする。
+各画面はURLを持ち、再読込で同じ画面に戻る。
+
+アイコン辞書の詳細は、通常項目の下に非操作の一覧を置く。
+`ICON_NAMES` の各アイコンを36px四方・1px枠・6px角丸で示し、下に注記サイズの名前を置く。
+8pxの間隔で折り返し、buttonやaにせず、Tab移動へ入れない。
+
+### 入力と操作部品
+
+- 通常ボタンはsurface-raised、1px枠、6px角丸、上下8px・左右14pxの余白とする。
+  ホバーはhover-1、無効時は不透明度50%でポインターを付けない。
+- 主ボタンはaccentで塗り、静かなアイコンボタンは透明背景とする。
+- 入力欄はsurface、1px枠、6px角丸、本文サイズとする。
+  ラベルは上にmutedの注記で置き、フォーカスはaccent色の枠と共通リングを使う。
+- モーダルは中央配置、12px角丸、16px余白とscrimを使う。
+  閉じるボタン・Esc・scrimで閉じ、内容は内部でスクロールできる最大80dvhとする。
+- 動きは150ms以下の高さ・透明度の変化とスピナーに限る。
+  `prefers-reduced-motion: reduce` では両方を止める。
 
 ## Verification
 
-- `designmd lint` validates the frontmatter structure.
-- UI claims in this document are verified **in a real browser** against
-  DOM, computed styles, geometry, and operations — never by reading
-  source alone. The standing invariants:
-  1. Default (no `data-theme`): `color-scheme` is `dark`, body
-     background computes to `rgb(25, 25, 25)`.
-  2. Choosing ライト in the theme modal sets `data-theme="light"`,
-     turns the body `rgb(250, 246, 239)`, writes the storage key, and
-     leaves the modal open.
-  3. At 375px the header contains exactly two interactive elements —
-     the title `<a href="/">` and the hamburger `<button>` — and
-     `document.documentElement.scrollWidth` never exceeds the
-     viewport, with the menu closed or open.
-  4. Cards compute to 1px border / 8px radius / 10px padding / 8px gap;
-     the list's `data-state` reflects loading, empty, error, success.
-  5. Chrome icons are all inline SVG on the 24×24 viewBox grid, stroked
-     with `currentColor` and rendered at 1.2em; no emoji or glyph icons
-     anywhere.
-  6. `:focus-visible` on any control shows the 2px accent outline with
-     2px offset.
-  7. Clicking the hamburger opens the dropdown: the panel's top edge
-     meets the header's bottom edge and its right edge aligns with the
-     hamburger's right edge (±1px); computed `min-width` 180px, 12px
-     radius, 1px border, the single floating shadow; no scrim element
-     exists and `aria-expanded` is `true`. Esc closes it and focus
-     returns to the hamburger; a click outside the panel also closes
-     it. Item 1 reads テーマ設定 and opens the centered theme modal.
-  8. A detail page's sub-header contains the item title and zero
-     buttons or links.
-  9. Home search filters on input, clears to all items, distinguishes no matches
-     from empty/error, and retains detail links. At 320px and up in both themes,
-     the field and cards fit the viewport; keyboard focus skips the decorative
-     icon, and the input uses the shared focus ring.
-  10. The アイコン辞書 detail page renders exactly `ICON_NAMES.length`
-     specimen tiles, none focusable; each icon box computes to
-     36×36px / 1px border / 6px radius with the entry name as a muted
-     caption.
+実装はSassの字下げ構文を使い、normalize.cssを先に読み込む。
+変数の接頭辞は色が `--c-*`、余白が `--sp-1..5`、文字が `--fs-xs..xl`、角丸が `--radius-*` とする。
+`designmd lint` は形式を検査する。UIへの適用は実ブラウザで次を確認する。
 
-## Do's and Don'ts
+- 同じデータ・画面サイズで変更前後を比べ、主要情報の面積と見える件数、色の強さを確認する。
+  新機能が動いても、重複情報や強い装飾で主役が隠れたら修正する。
+- 明暗、320px以上の狭幅、長い名前、空、読込、失敗、検索、キーボードを変更範囲に応じて確認する。
+- Sumiの背景色をrgb(25,25,25)にする。Kinariではrgb(250,246,239)となる。
+  明示指定がOSより優先され、自動へ戻すと属性と保存キーが消える。
+- 375pxのheaderの操作対象はアプリ名とメニューボタンの2つだけとする。
+  メニュー開閉時も横にはみ出さず、パネルの位置は指定する端と±1px以内で一致する。
+- カード・アイコン・フォーカスの寸法、各状態、メニューとモーダルの閉じ方を部品規則と照合する。
+  辞書の表示件数は `ICON_NAMES` と一致し、操作できない項目はフォーカスを持たない。
 
-- Do source every color from a `--c-*` variable; don't hardcode hex in
-  components.
-- Do consume `--c-wash-*` / `--c-hover-*` for bands and hovers; don't
-  reach for `accent-subtle` directly in those jobs.
-- Do keep exactly one accent-filled primary action per screen.
-- Do present the menu as a hamburger-anchored dropdown; centered
-  modals are for dialogs (theme settings), never for navigation.
-- Don't use emoji or text glyphs as icons; every icon is an
-  `Icon.svelte` dictionary entry.
-- Don't introduce font sizes, radii, spacing values, or shadows outside
-  the defined scales — the modal shadow is the only shadow.
-- Do give the list every one of its four states; don't ship a page where
-  error or empty renders as blank.
-- Do maintain WCAG AA (4.5:1) for all text in both themes; verify in
-  the browser, not by eye.
-- Do design in Sumi first, then verify Kinari as a warm sibling — never
-  as an inverted afterthought.
-- Don't re-point any rule at the canonical templates; adapt changes into
-  this file explicitly.
-- Do rename the theme storage key and the accent pair when deriving a
-  project; don't ship a derivative still wearing the template amber.
+一覧の非固定・自然なスクロールを守る実装と回帰検証の整備は、後続の統一レイアウト基盤タスクで行う。
+本書の改訂だけで、派生製品のUIも適合したとは扱わない。
