@@ -87,6 +87,8 @@ npm --prefix client ci
 npm --prefix client run format:check
 npm --prefix client run check
 npm --prefix client test
+npx --prefix client playwright install --with-deps chromium
+npm --prefix client run test:e2e
 npm --prefix client run build
 npm --prefix client run lint:design
 cargo fmt --check
@@ -94,6 +96,9 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo test --locked
 cargo build --locked --release
 ```
+
+Then run the [production smoke test](#production-build-and-smoke-test) against that release binary.
+Run this set before every commit; GitHub Actions does not run these checks.
 
 `npm run lint:design` checks the design contract in [`DESIGN.md`](DESIGN.md). Keep that document in
 sync when changing the starter interface's visual system or interaction states.
@@ -176,7 +181,7 @@ configuration.
 
 ```text
 .
-├── .github/workflows/  # Continuous integration and container release automation
+├── .github/workflows/  # Container release automation
 ├── client/             # Svelte 5 app, Vite config, tests, and the npm lockfile
 ├── src/                # Axum router and executable entry point
 ├── Cargo.toml          # Rust package and dependency configuration
@@ -217,9 +222,9 @@ Repository contents cannot enable GitHub's template flag. A repository administr
 **Settings → General**, enable **Template repository**, and verify that the **Use this template**
 button appears on the repository page.
 
-Continuous integration checks pushes to `main` and pull requests, including a debug server smoke
-test from an isolated directory using the embedded frontend. Pull requests also build the production container without publishing
-it. Pushes to `main` do not build the release binary or container, or publish images.
+GitHub Actions runs only the release workflow. Formatting, linting, tests and the smoke test run
+locally in the [verification set](#verify-changes) before each commit; pushes and pull requests
+trigger no workflow.
 
 This repository is a template, not a released product. Its container release workflow is manual by
 default, and pushing a tag alone does not publish anything. The following release setup is for a
@@ -229,7 +234,7 @@ For automatic product releases, uncomment the `push` / `tags` trigger in
 [`.github/workflows/release.yml`](.github/workflows/release.yml). Leave `workflow_dispatch` in place
 to allow manual runs with a `v`-prefixed tag selected as the ref. In the derived repository, update
 `package.version` in `Cargo.toml`, run `cargo check` to refresh `Cargo.lock`, and commit both files.
-After that commit's CI checks pass, create and push its matching SemVer tag (for example, package
+After that commit passes the local verification set, create and push its matching SemVer tag (for example, package
 version `1.2.3`):
 
 ```sh
@@ -244,7 +249,7 @@ Each release first verifies that the tag matches `Cargo.toml`'s package version,
 tagged source using its actual `Cargo.toml` and `Cargo.lock`, pushes
 `ghcr.io/<owner>/<repository>:<version>` and `latest`, and creates a GitHub Release with generated
 notes and the published image reference (`ghcr.io/<owner>/<repository>:X.Y.Z@sha256:…`). It does
-not depend on a previously published CI image. Re-running the workflow for a tag that already has a
+not depend on a previously published image. Re-running the workflow for a tag that already has a
 GitHub Release leaves that Release as it is.
 
 The release workflow imports and exports BuildKit's registry cache at
@@ -279,7 +284,7 @@ npx playwright install --with-deps chromium
 npm run test:e2e
 ```
 
-CI runs these browser checks alongside the existing unit tests. They measure content
+The [verification set](#verify-changes) runs these browser checks alongside the unit tests. They measure content
 position, visible rows, overflow and wheel behavior at four sizes in both themes,
 and exercise search, long names, loading, empty, failure recovery and keyboard focus.
 
