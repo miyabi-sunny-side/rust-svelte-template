@@ -106,6 +106,12 @@ checks.
 `npm run lint:design` checks the design contract in [`DESIGN.md`](DESIGN.md). Keep that document in
 sync when changing the starter interface's visual system or interaction states.
 
+When a change touches `Cargo.toml`, `Cargo.lock`, `build.rs` or the `Dockerfile`, also run the
+[Docker build](#docker). The release workflow builds that image, and its dependency-caching stage
+sees only `Cargo.toml`, `Cargo.lock`, `build.rs` and `src/`. A target declared in `Cargo.toml` must
+therefore name its `path`, as the `page` test does, or the image build fails while the local set
+still passes.
+
 ## Page tests
 
 The page is tested in two layers. Put a test in the browser layer only when it needs a browser's

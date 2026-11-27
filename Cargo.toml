@@ -23,8 +23,10 @@ tokio = { version = "1.53.1", features = ["time"] }
 tower = { version = "0.5.3", features = ["util"] }
 
 # The page in a real browser: its own runner runs the tests one after another (tests/page.rs).
+# The path is named because the image build reads this manifest without tests/ (Dockerfile).
 [[test]]
 name = "page"
+path = "tests/page.rs"
 harness = false
 
 [lints.clippy]
