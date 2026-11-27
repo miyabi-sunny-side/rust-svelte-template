@@ -311,14 +311,14 @@ Enterや送信は不要。消去で全件へ戻し、タブが再表示された
 通常フローと余白は `App.svelte` と `global.sass` の `.content` が所有する。
 密な表は `.content.content-wide` 内の `.table-scroll` にsemantic tableを置く。
 表の最小幅640pxは採用例であり、派生製品の列に合わせて変更する。
-`client/e2e/table.html` は同じstyleを使うテスト専用例で、本番ビルドへ含めない。
+表の例は画面の試験 (`tests/page.rs`) が同じstyleの下に組むだけで、本番ビルドへ含めない。
 派生時は必要なstyleと検証を明示的に取り込み、製品のデータと操作で確認する。
 
-`npm --prefix client run test:e2e` はChromiumでHomeと表を測る。
+`cargo test --test page` はChromium (Chrome for Testingのheadless shell) でHomeと表を測る。
 1440×900・1280×720・375×812・320×640の明暗で、本文の内部縦スクロール余地0px、
 ページの横はみ出し0px、wheelで行と列見出しが流れることを確認する。
 100件のfixtureでカード先頭160px以内・完全可視7件以上、表先頭65px以内・15行以上を最低基準とする。
 カードの160pxは48pxのheader・検索欄・余白を含む実測に基づく。
-表の65pxはheaderを含まない単体fixtureの余白と列見出しだけの実測に基づく。
+表の65pxはheaderを含まない試験用の表の余白と列見出しだけの実測に基づく。
 派生製品は実際のheader・検索欄などを含めて測り直し、その画面の基準を定める。
 通常状態の情報追加でこの領域を削る場合は、説明の重複を先に見直す。

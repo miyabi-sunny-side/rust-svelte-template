@@ -120,6 +120,40 @@ describe("Home", () => {
     await waitFor(() => expect(listContainer().dataset.state).toBe("empty"));
   });
 
+  it("tells loading, empty, failure and no match apart in words", async () => {
+    let answer!: (response: Response) => void;
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+      )
+      .mockResolvedValueOnce(new Response("", { status: 500 }))
+      .mockResolvedValueOnce(jsonResponse([ITEMS[0]]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(Home);
+    expect(screen.getByText("読み込み中…")).toBeTruthy();
+
+    answer(jsonResponse([]));
+    expect(await screen.findByText("項目がありません")).toBeTruthy();
+
+    setVisibility("visible");
+    expect(await screen.findByText("読み込みに失敗しました")).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+    await waitFor(() => expect(screen.getAllByRole("link")).toHaveLength(1));
+
+    const input = screen.getByRole("searchbox", { name: "名前で検索" });
+    await fireEvent.input(input, { target: { value: "missing" } });
+    expect(screen.getByRole("status").textContent).toBe(
+      "一致する項目がありません",
+    );
+    await fireEvent.input(input, { target: { value: "" } });
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+  });
+
   it("shows the error state and recovers through the retry button", async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

@@ -15,6 +15,8 @@ design contract behind that shell.
 - Rust 1.96.0 (the checked-in toolchain file selects it automatically through `rustup`)
 - Node.js 24 LTS
 - npm (included with Node.js)
+- Python 3, for [`bin/browser`](bin/browser), which fetches the browser of the page tests
+- Linux on x86-64 with the shared libraries Chrome needs, for the page tests
 - Docker, optionally, for the container workflow
 
 The only JavaScript lockfile is `client/package-lock.json`. Run npm commands from `client/` and use
@@ -87,21 +89,60 @@ npm --prefix client ci
 npm --prefix client run format:check
 npm --prefix client run check
 npm --prefix client test
-npx --prefix client playwright install --with-deps chromium
-npm --prefix client run test:e2e
 npm --prefix client run build
 npm --prefix client run lint:design
+python3 -B -m unittest discover -s bin -p 'test_*.py'
 cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --locked
 cargo build --locked --release
 ```
 
-Then run the [production smoke test](#production-build-and-smoke-test) against that release binary.
-Run this set before every commit; GitHub Actions does not run these checks.
+`cargo test` includes the browser tests of the page (see [Page tests](#page-tests)); the first run
+downloads their browser. Then run the [production smoke test](#production-build-and-smoke-test)
+against that release binary. Run this set before every commit; GitHub Actions does not run these
+checks.
 
 `npm run lint:design` checks the design contract in [`DESIGN.md`](DESIGN.md). Keep that document in
 sync when changing the starter interface's visual system or interaction states.
+
+## Page tests
+
+The page is tested in two layers. Put a test in the browser layer only when it needs a browser's
+engine: layout, sizes, overlap, scrolling, actual colors, canvas drawing, real playback, or real
+input. Everything else (text, which state shows, forms, requests after an action, roles and names,
+key handling) belongs in jsdom.
+
+- `npm --prefix client test` runs the Vitest + jsdom tests that sit next to the components as
+  `client/src/**/*.test.ts`. Each test answers the API by replacing `fetch`.
+- `cargo test --test page` runs [`tests/page.rs`](tests/page.rs) against the real binary in
+  Chrome for Testing's `chrome-headless-shell`. One browser runs the tests one after another,
+  driven through its matching `chromedriver` by W3C WebDriver commands sent over HTTP from Rust.
+  The server and chromedriver listen on ports chosen by the OS, so runs of several repositories do
+  not collide. [`tests/support/page.js`](tests/support/page.js) answers `/api/items` with the
+  list a test lays out. Add words after `--` to run only the tests whose titles contain them.
+
+[`bin/browser`](bin/browser) pins the browser version and the SHA-256 of both downloads. On first
+use it downloads them into `${XDG_CACHE_HOME:-~/.cache}/chrome-for-testing/<version>/`, which
+repositories pinning the same version share, and later runs reuse that directory without network
+access.
+
+### List layout regression checks
+
+`client/src/global.sass` owns the `.content` spacing and the opt-in `.content-wide` /
+`.table-scroll` recipes for dense tables. Copy the needed styles and the page tests into derived
+products, then adapt columns and measurements to their own DESIGN.md. Cards and table rows scroll
+with the document; wide tables scroll horizontally locally.
+
+The browser tests measure content position, visible rows, overflow and wheel behavior of the Home
+cards and of a dense table at four sizes in both themes, horizontal scrolling of the table by key
+in narrow windows, and a long name and keyboard focus at 320px. The jsdom tests cover search,
+loading, empty, failure recovery and the no-match message.
+
+The Home measurements include its app header and search field. The table test replaces the page
+with a table under the same styles; it has neither, so its top-position budget covers only content
+padding and column headings. Derived products must measure their complete screen before setting a
+budget.
 
 ## Production build and smoke test
 
@@ -182,8 +223,10 @@ configuration.
 ```text
 .
 ├── .github/workflows/  # Container release automation
-├── client/             # Svelte 5 app, Vite config, tests, and the npm lockfile
+├── bin/                # Fetches the pinned browser for the page tests
+├── client/             # Svelte 5 app, Vite config, jsdom tests, and the npm lockfile
 ├── src/                # Axum router and executable entry point
+├── tests/              # Rust integration tests, including the page tests in a browser
 ├── Cargo.toml          # Rust package and dependency configuration
 ├── DESIGN.md           # Starter UI design contract
 ├── Dockerfile          # Reproducible multi-stage production image
@@ -269,25 +312,3 @@ their own runtime requirements before choosing a different tradeoff.
 ## License
 
 This template is available under the [MIT License](LICENSE).
-
-## List layout regression checks
-
-`client/src/global.sass` owns the `.content` spacing and the opt-in `.content-wide` /
-`.table-scroll` recipes for dense tables. Copy the needed styles and
-`client/e2e/layout.spec.ts` into derived products, then adapt columns and measurements
-to their own DESIGN.md. The HTML table fixture is test-only and excluded from the build.
-Cards and table rows scroll with the document; wide tables scroll horizontally locally.
-
-```sh
-cd client
-npx playwright install --with-deps chromium
-npm run test:e2e
-```
-
-The [verification set](#verify-changes) runs these browser checks alongside the unit tests. They measure content
-position, visible rows, overflow and wheel behavior at four sizes in both themes,
-and exercise search, long names, loading, empty, failure recovery and keyboard focus.
-
-The Home measurements include its app header and search field. The standalone table
-fixture has neither; its top-position budget covers only content padding and column
-headings. Derived products must measure their complete screen before setting a budget.
